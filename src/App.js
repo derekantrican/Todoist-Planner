@@ -8,7 +8,7 @@ import {
 import './App.css';
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { todoistCompleteTask, todoistGetLabels, todoistGetTasks, todoistUpdateTask } from './helpers/todoistApi';
-import { convertMarkdown, nextWeek, todayPlusDays, todayWithHour, todayWithTime } from './helpers/utils';
+import { convertMarkdown, nextWeek, todayPlusDays, todayWithHour } from './helpers/utils';
 import { readSettings } from './helpers/settings';
 import { SettingsView } from './views/settingsView';
 import { FinalMessage } from './views/finalMessageView';

@@ -32,13 +32,13 @@ export function SettingsView() {
         <SettingsRow displayName='Todoist API Key' onChange={e => console.log(e.target.value)}/>{/*Todo: this should be an "auto todoist" button that follows the auth flow: https://developer.todoist.com/guides/#authorization*/}
         <SettingsRow displayName='Task filter'/>
         <SettingsRow displayName='First day of week'/>{/*Todo: this should be a dropdown*/}{/*Todo: maybe we can get this from the todoist user settings*/}
-        <SettingsRow displayName='Time format'/>{/*Todo: this should be a toggle switch*/}
+        <SettingsRow displayName='Time format'/>{/*Todo: this should be a toggle switch*/}{/*Todo: maybe we can get this from the todoist user settings*/}
         <SettingsRow displayName='"Today" label to apply'/>
         <SettingsRow displayName='"Tomorrow" label to apply'/>
         <SettingsRow displayName='"Other" label to apply'/>
         <Button variant='contained' sx={{marginTop: 'auto'}} onClick={saveSettings}>Save</Button>
         <div style={{display: 'grid', marginTop: 5, gridTemplateColumns: 'auto auto', gap: 10}}>
-          {/*Todo: tweak the styles here - they're not the best*/}
+          {/*Todo: tweak the styles here - they're not the best (they also don't look great on different screen sizes - the images should probably have a fixed ratio)*/}
           <a href='https://github.com/derekantrican/Todoist-Planner' target='_blank' rel='noreferrer'>
             <img height='36' style={{border: 0, borderRadius: 10, height: 36, width: '100%'}} src='https://i.imgur.com/Y7LVELD.png' border='0' alt='GitHub Repository' />
           </a>
