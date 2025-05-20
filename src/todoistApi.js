@@ -1,5 +1,3 @@
-import { uuidv4 } from "./utils";
-
 const todoistRestApiBase = 'https://api.todoist.com/rest/v2';
 const todoistSyncApi = 'https://api.todoist.com/sync/v9/sync';
 
@@ -39,7 +37,7 @@ export async function todoistUpdateTask(id, data) {
         //Todo: if I have to use the Sync API, see if I can do the below as JSON rather than form-urlencoded
         `commands=${encodeURIComponent(JSON.stringify([{
           type: 'item_update',
-          uuid: uuidv4(),
+          uuid: crypto.randomUUID(),
           args: {
             id: id,
             ...data
