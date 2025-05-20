@@ -29,7 +29,7 @@ export function SettingsView() {
     <React.Fragment>
       <div style={{width: 'calc(100% - 30px)', height: '100%', display: 'flex', flexDirection: 'column', padding: 15}}>
         <Typography variant='h4' sx={{alignSelf: 'center'}}>Settings</Typography>
-        <SettingsRow displayName='Todoist API Key' onChange={e => console.log(e.target.value)}/>
+        <SettingsRow displayName='Todoist API Key' onChange={e => console.log(e.target.value)}/>{/*Todo: this should be an "auto todoist" button that follows the auth flow: https://developer.todoist.com/guides/#authorization*/}
         <SettingsRow displayName='Task filter'/>
         <SettingsRow displayName='First day of week'/>{/*Todo: this should be a dropdown*/}
         <SettingsRow displayName='Time format'/>{/*Todo: this should be a toggle switch*/}

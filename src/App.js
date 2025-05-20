@@ -24,19 +24,8 @@ const darkTheme = createTheme({
 
 function App() {
   //TODO BEFORE PUBLIC:
-  // - In the future, it'd be great if this was published publicly (maybe hosted on GitHub pages).
-  //   If so, then we would need to remove some hardcoded values and make some of the following changes
-  //   (with the following being stored in the browser's localstorage):
   //     - Use MUI DatePicker & TimePicker (for picker dialog). In this version, we can't use them because they're
   //         in another package that can't be included via CDN. So we're using HTML input elements instead
-  //     - Auth flow with Todoist: https://developer.todoist.com/guides/#authorization
-  //     - Settings view:
-  //       - Ability to change the filter query (default: 'today | overdue') for what tasks to use in this app
-  //       - Default day of the week for "next week" reschedules
-  //       - (maybe) Whether the "Today" times should be 24 hr or 12 hr time
-  //       - (maybe) ability to customize the time options for "today" reschedules
-  //       - (optional) default labels to apply for "today" tasks and "other" (not today) tasks
-
   const [visibleItemsDoneAnimating, setVisibleItemsDoneAnimating] = useState(false);
   const [currentPrimaryItemAnimation, setCurrentPrimaryItemAnimation] = useState(null);
   const [actionPanelType, setActionPanelType] = useState('primary');

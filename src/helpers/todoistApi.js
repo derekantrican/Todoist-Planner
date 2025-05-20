@@ -1,5 +1,6 @@
 import { readSettings } from "./settings";
 
+//Todo: Todoist is making a new, unified v1 API and we should change our methods to work with that: https://developer.todoist.com/api/v1
 const todoistRestApiBase = 'https://api.todoist.com/rest/v2';
 const todoistSyncApi = 'https://api.todoist.com/sync/v9/sync';
 
