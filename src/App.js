@@ -7,9 +7,9 @@ import {
 } from '@mui/material'; //Todo: we're probably not really utililizing much of MUI - maybe we can get rid of it
 import './App.css';
 import "bootstrap-icons/font/bootstrap-icons.css";
-import { todoistCompleteTask, todoistGetLabels, todoistGetTasks, todoistUpdateTask } from './helpers/todoistApi';
+import { todoistCompleteTask, todoistGetLabels, todoistGetTasks, todoistUpdateSettingsFromTodoist, todoistUpdateTask } from './helpers/todoistApi';
 import { convertMarkdown, nextWeek, todayPlusDays, todayWithHour } from './helpers/utils';
-import { readSettings } from './helpers/settings';
+import { readSettings, settings } from './helpers/settings';
 import { SettingsView } from './views/settingsView';
 import { FinalMessage } from './views/finalMessageView';
 import { PickerDialog } from './views/pickerDialog';
@@ -62,6 +62,8 @@ function App() {
     if (settings.todoistApiKey) {
       populateTodoistItems();
       populateTodoistLabels();
+
+      todoistUpdateSettingsFromTodoist();
     }
     else {
       setShowSettings(true);
@@ -243,7 +245,7 @@ function App() {
                 <ActionButton text='In 2 days' color='warning' icon='chevron-double-right' size='50'
                   onClick={() => rescheduleCurrentTask(todayPlusDays(2) /*Todo: get 'other label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
                 <ActionButton text='Next week' color='warning' icon='chevron-bar-right' size='50'
-                  onClick={() => rescheduleCurrentTask(nextWeek() /*Todo: get 'other label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(nextWeek(settings.next_week) /*Todo: get 'other label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
                 <ActionButton text='Someday' color='warning' icon='question' size='50'
                   onClick={() => rescheduleCurrentTask('someday' /*Todo: get 'other label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
               </div>

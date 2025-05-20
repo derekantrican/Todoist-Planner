@@ -24,6 +24,7 @@ export function PickerDialog(props) {
     <Dialog open={props.open} onClose={props.onClose} fullWidth maxWidth="xl">
       <DialogContent>
         <div style={{display: 'flex', justifyContent: 'center'}}>
+          {/*Todo: timepicker & datetimepicker should be changed to the MUI implementations so we can easily change 24hr vs 12hr time based on settings.time_format */}
           {props.type === 'time' ?
             <Input style={{fontSize: '2rem'}} type="time" defaultValue="12:00" //Using noon as a default
               onChange={e => setTimeResult(e)}/> :

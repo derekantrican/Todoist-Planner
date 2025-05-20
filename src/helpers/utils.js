@@ -17,8 +17,7 @@ export function todayPlusDays(numDays) {
   return today;
 }
 
-export function nextWeek() {
-  var dayOfWeek = 1;
+export function nextWeek(dayOfWeek) {
   var today = new Date();
   return todayPlusDays(((dayOfWeek + 7 - today.getDay()) % 7) || 7);
 }

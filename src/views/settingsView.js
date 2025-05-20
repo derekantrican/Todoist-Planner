@@ -15,8 +15,6 @@ function SettingsRow(props) {
 
 // Settings view:
 // - Ability to change the filter query (default: 'today | overdue') for what tasks to use in this app
-// - Default day of the week for "next week" reschedules
-// - (maybe) Whether the "Today" times should be 24 hr or 12 hr time
 // - (maybe) ability to customize the time options for "today" reschedules
 // - (optional) default labels to apply for "today" tasks and "other" (not today) tasks
 
@@ -29,10 +27,8 @@ export function SettingsView() {
     <React.Fragment>
       <div style={{width: 'calc(100% - 30px)', height: '100%', display: 'flex', flexDirection: 'column', padding: 15}}>
         <Typography variant='h4' sx={{alignSelf: 'center'}}>Settings</Typography>
-        <SettingsRow displayName='Todoist API Key' onChange={e => console.log(e.target.value)}/>{/*Todo: this should be an "auto todoist" button that follows the auth flow: https://developer.todoist.com/guides/#authorization*/}
+        <SettingsRow displayName='Todoist API Key' onChange={e => console.log(e.target.value)}/>{/*Todo: this should be an "auth todoist" button that follows the auth flow: https://developer.todoist.com/guides/#authorization*/}
         <SettingsRow displayName='Task filter'/>
-        <SettingsRow displayName='First day of week'/>{/*Todo: this should be a dropdown*/}{/*Todo: maybe we can get this from the todoist user settings*/}
-        <SettingsRow displayName='Time format'/>{/*Todo: this should be a toggle switch*/}{/*Todo: maybe we can get this from the todoist user settings*/}
         <SettingsRow displayName='"Today" label to apply'/>
         <SettingsRow displayName='"Tomorrow" label to apply'/>
         <SettingsRow displayName='"Other" label to apply'/>

@@ -1,6 +1,19 @@
-import { readSettings } from "./settings";
+import { readSettings, settings } from "./settings";
 
 const todoistRestApiBase = 'https://api.todoist.com/api/v1';
+
+export async function todoistUpdateSettingsFromTodoist() {
+  const response = await fetch(`${todoistRestApiBase}/user`, {
+    headers: {
+      'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
+    },
+  });
+
+  const user = await response.json();
+
+  settings.next_week = user.next_week; // 1-7 with "1" being "Monday"
+  settings.time_format = user.time_format === 0 ? 24 : 12;
+}
 
 export async function todoistGetTasks() {
   const response = await fetch(`${todoistRestApiBase}/tasks/filter?query=today|overdue`, {
