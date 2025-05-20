@@ -1,38 +1,56 @@
-.App {
-  text-align: center;
+:root{
+  color-scheme: dark; /*Todo: this should be a setting*/
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+h3 > p { /*Clear margin from showdown.js*/
+  margin: 0;
+}
+
+.slideInAnimation {
+  animation-duration: 2s;
+  animation-name: slidein;
+}
+
+@keyframes slidein {
+  from {
+    margin-left: 100%;
+  }
+
+  to {
+    margin-left: 0%;
   }
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.collapse {
+  animation-duration: 0.5s;
+  animation-name: collapseItem;
+  animation-fill-mode: forwards;
 }
 
-.App-link {
-  color: #61dafb;
+@keyframes collapseItem {
+  to {
+    transform: scaleY(0);
+  }
 }
 
-@keyframes App-logo-spin {
+.slideInOthers {
+  animation-duration: 0.5s;
+  animation-name: collapseWidth;
+}
+
+@keyframes collapseWidth {
   from {
-    transform: rotate(0deg);
+    transform: scaleY(0);
   }
   to {
-    transform: rotate(360deg);
+    transform: scaleY(0);
+    width: 0;
+    margin: 0;
   }
 }
