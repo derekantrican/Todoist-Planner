@@ -49,6 +49,8 @@ function App() {
       const markdownLinkRegex = /\[(.*)\]\(.*\)/;
       data.forEach(t => t.content = markdownLinkRegex.test(t.content) ? t.content.replace(markdownLinkRegex, "$1") : t.content);
 
+      //Todo: if no tasks are found, we should show that instead of the FinalMessageView
+
       setTasks(data);
       setLoading(false);
     };
