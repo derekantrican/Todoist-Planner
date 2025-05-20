@@ -1,11 +1,9 @@
 import { readSettings } from "./settings";
 
-//Todo: Todoist is making a new, unified v1 API and we should change our methods to work with that: https://developer.todoist.com/api/v1
-const todoistRestApiBase = 'https://api.todoist.com/rest/v2';
-const todoistSyncApi = 'https://api.todoist.com/sync/v9/sync';
+const todoistRestApiBase = 'https://api.todoist.com/api/v1';
 
 export async function todoistGetTasks() {
-  const response = await fetch(`${todoistRestApiBase}/tasks?filter=today|overdue`, {
+  const response = await fetch(`${todoistRestApiBase}/tasks/filter?query=today|overdue`, {
     headers: {
       'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
     },
@@ -25,7 +23,7 @@ export async function todoistGetLabels() {
 };
 
 export async function todoistUpdateTask(id, data) {
-  await fetch(todoistSyncApi, {
+  await fetch(`${todoistRestApiBase}/sync`, {
       method: 'post',
       headers: {
         'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
@@ -33,7 +31,6 @@ export async function todoistUpdateTask(id, data) {
       },
       body: [
         //Todo: see if I can do this with the REST API (rather than Sync)
-        //Todo: if I have to use the Sync API, see if I can do the below as JSON rather than form-urlencoded
         `commands=${encodeURIComponent(JSON.stringify([{
           type: 'item_update',
           uuid: crypto.randomUUID(),
@@ -56,12 +53,10 @@ export async function todoistCompleteTask(id) {
 };
 
 export async function todoistDeleteTask(id) {
-  const response = await fetch(`${todoistRestApiBase}/tasks/${id}`, {
+  await fetch(`${todoistRestApiBase}/tasks/${id}`, {
     method: 'delete',
     headers: {
       'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
     },
   });
-  
-  return await response.json();
 };

@@ -38,7 +38,7 @@ function App() {
 
   useEffect(() => {
     async function populateTodoistItems() {
-      const data = await todoistGetTasks(); //Todo: in the public version, we'll need to catch auth errors and show an auth prompt instead
+      const data = (await todoistGetTasks()).results; //Todo: in the public version, we'll need to catch auth errors and show an auth prompt instead
 
       //Replace markdown links like '[some link](www.google.com)' to 'some link' for easier reading
       //(I could also let these go through showdown.js and be rendered, but I don't know if I want to
@@ -53,7 +53,7 @@ function App() {
     };
 
     async function populateTodoistLabels() {
-      const data = await todoistGetLabels();
+      const data = (await todoistGetLabels()).results;
       setTodoistLabels(data);
     }
 
@@ -196,10 +196,12 @@ function App() {
                   return null;
                 }
 
-                return (<div key={l} style={{display: 'flex', flexDirection: 'row'}}>
-                  <i style={{margin: 5, color: matchingLabelData.color}} className='bi bi-tag-fill'/>
-                  <Typography>{l}</Typography>
-                </div>);
+                return (
+                  <div key={l} style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
+                    <i style={{margin: 5, color: matchingLabelData.color}} className='bi bi-tag-fill'/>
+                    <Typography>{l}</Typography>
+                  </div>
+                );
               })
               : null}
             </div>
