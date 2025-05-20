@@ -1,14 +1,6 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import showdown from 'showdown';
 import {
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  Input,
-  IconButton,
   Typography,
   ThemeProvider,
   createTheme,
@@ -16,92 +8,19 @@ import {
 import './App.css';
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { todoistCompleteTask, todoistGetLabels, todoistGetTasks, todoistUpdateTask } from './helpers/todoistApi';
-import { nextWeek, todayPlusDays, todayWithHour, todayWithTime } from './helpers/utils';
+import { convertMarkdown, nextWeek, todayPlusDays, todayWithHour, todayWithTime } from './helpers/utils';
 import { readSettings } from './helpers/settings';
 import { SettingsView } from './views/settingsView';
 import { FinalMessage } from './views/finalMessageView';
+import { PickerDialog } from './views/pickerDialog';
+import { LoadingView } from './views/loadingView';
+import { ActionButton, TextActionButton } from './views/actionButton';
 
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
   },
 });
-
-const convertMarkdown = (text) => {
-  if (text) {
-    return new showdown.Converter().makeHtml(text);
-  }
-
-  return null;
-}
-
-function LoadingView() {
-  return (
-    <div style={{margin: 'auto'}}>
-      <CircularProgress size="10rem" sx={{}}/>
-      <Typography sx={{marginTop: 10}}>Getting your tasks...</Typography>
-    </div>
-  );
-}
-
-function PickerDialog(props) {
-  const [result, setResult] = useState(null);
-
-  const onSubmit = () => {
-      props.resultHandler(result);
-      props.onClose();
-  };
-
-  const setTimeResult = e => {
-    const valParts = e.target.value.split(':');
-    setResult(todayWithTime(valParts[0], valParts[1]));
-  };
-
-  const setDateResult = e => {
-    const dateParts = e.target.value.split('-');
-    setResult(new Date(dateParts[0], dateParts[1] - 1, dateParts[2]));
-  };
-
-  return (
-    <Dialog open={props.open} onClose={props.onClose} fullWidth maxWidth="xl">
-      <DialogContent>
-        <div style={{display: 'flex', justifyContent: 'center'}}>
-          {props.type === 'time' ?
-            <Input style={{fontSize: '2rem'}} type="time" defaultValue="12:00" //Using noon as a default
-              onChange={e => setTimeResult(e)}/> :
-            <Input style={{fontSize: '2rem'}} type="date" defaultValue={new Date().yyyyMMdd()} //Using today as a default
-              onChange={e => setDateResult(e)}/>
-          }
-        </div>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onSubmit}>OK</Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
-
-function ActionButton(props) {
-  return (
-    <div style={{margin: props.margin ?? '5px', display: 'flex', flexDirection: 'column'}}>
-      <IconButton color={props.color} onClick={props.onClick} disabled={!props.enabled}>
-        <i style={{fontSize: props.size ?? 60}} className={`bi bi-${props.icon}`}/>
-      </IconButton>
-      <Typography sx={{textAlign: 'center'}}>{props.text}</Typography>
-    </div>
-  );
-}
-
-function TextActionButton(props) {
-  return (
-    <div style={{margin: props.margin ?? '5px 10px', display: 'flex', flexDirection: 'column'}}>
-      <Button sx={{fontSize: props.size ?? 60, padding: 0, lineHeight: 1.4, minWidth: 0}} color={props.color} onClick={props.onClick} disabled={!props.enabled}>
-        {props.innerText}
-      </Button>
-      <Typography sx={{textAlign: 'center'}}>{props.text}</Typography>
-    </div>
-  );
-}
 
 function App() {
   //TODO BEFORE PUBLIC:

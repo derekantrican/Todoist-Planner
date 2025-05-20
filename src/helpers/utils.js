@@ -1,3 +1,5 @@
+import Showdown from "showdown";
+
 export function todayWithHour(hour) {
   var today = new Date();
   return new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour);
@@ -29,4 +31,12 @@ Date.prototype.yyyyMMdd = function () {
   date = date.length < 2 ? '0' + date : date;
   
   return `${this.getFullYear()}-${month}-${date}`;
+}
+
+export function convertMarkdown(text) {
+  if (text) {
+    return new Showdown.Converter().makeHtml(text);
+  }
+
+  return null;
 }
