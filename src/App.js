@@ -225,7 +225,7 @@ function App() {
                   onClick={() => deleteCurrentTask()} enabled={!currentPrimaryItemAnimation}/>
               </div>
               <div style={{display: actionPanelType === 'today' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-between', overflowX: 'auto'}}>
-                <ActionButton text="Don't&nbsp;Set Time" color='success' icon='bell-slash' size='40'
+                <ActionButton text="Don't&nbsp;Set Time" color='success' icon='bell-slash' size='30'
                   onClick={() => rescheduleCurrentTask(todayPlusDays(0), 'SELECTED_TODAY' /*Todo: get 'today label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
                 <TextActionButton text='Morning' innerText='10' size='40' color='success'
                   onClick={() => rescheduleCurrentTask(todayWithHour(10), 'SELECTED_TODAY' /*Todo: get 'today label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>

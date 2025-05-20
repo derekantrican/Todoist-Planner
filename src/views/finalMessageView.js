@@ -6,7 +6,7 @@ export function FinalMessage() {
     "TODAY",
     "IS THE",
     "DAY!",
-  ];
+  ]; // Todo: Perhaps we can have other short messages like "you got this!" or whatever and choose one at random
 
   useEffect(() => {
     (function() {
