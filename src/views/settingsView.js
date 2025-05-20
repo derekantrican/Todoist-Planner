@@ -37,9 +37,15 @@ export function SettingsView() {
         <SettingsRow displayName='"Tomorrow" label to apply'/>
         <SettingsRow displayName='"Other" label to apply'/>
         <Button variant='contained' sx={{marginTop: 'auto'}} onClick={saveSettings}>Save</Button>
-        <a style={{marginTop: 5, alignSelf: 'end'}} href='https://ko-fi.com/E1E5RZJY' target='_blank' rel='noreferrer'>
-          <img height='36' style={{border: 0, height: 36}} src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' />
-        </a>
+        <div style={{display: 'grid', marginTop: 5, gridTemplateColumns: 'auto auto', gap: 10}}>
+          {/*Todo: tweak the styles here - they're not the best*/}
+          <a href='https://github.com/derekantrican/Todoist-Planner' target='_blank' rel='noreferrer'>
+            <img height='36' style={{border: 0, borderRadius: 10, height: 36, width: '100%'}} src='https://i.imgur.com/Y7LVELD.png' border='0' alt='GitHub Repository' />
+          </a>
+          <a href='https://ko-fi.com/E1E5RZJY' target='_blank' rel='noreferrer'>
+            <img height='36' style={{border: 0, height: 36, width: '100%'}} src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' />
+          </a>
+        </div>
       </div>
     </React.Fragment>
   );
