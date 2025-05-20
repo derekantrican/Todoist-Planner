@@ -23,9 +23,6 @@ const darkTheme = createTheme({
 });
 
 function App() {
-  //TODO BEFORE PUBLIC:
-  //     - Use MUI DatePicker & TimePicker (for picker dialog). In this version, we can't use them because they're
-  //         in another package that can't be included via CDN. So we're using HTML input elements instead
   const [visibleItemsDoneAnimating, setVisibleItemsDoneAnimating] = useState(false);
   const [currentPrimaryItemAnimation, setCurrentPrimaryItemAnimation] = useState(null);
   const [actionPanelType, setActionPanelType] = useState('primary');
