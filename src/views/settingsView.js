@@ -31,7 +31,7 @@ export function SettingsView() {
         <Typography variant='h4' sx={{alignSelf: 'center'}}>Settings</Typography>
         <SettingsRow displayName='Todoist API Key' onChange={e => console.log(e.target.value)}/>{/*Todo: this should be an "auto todoist" button that follows the auth flow: https://developer.todoist.com/guides/#authorization*/}
         <SettingsRow displayName='Task filter'/>
-        <SettingsRow displayName='First day of week'/>{/*Todo: this should be a dropdown*/}
+        <SettingsRow displayName='First day of week'/>{/*Todo: this should be a dropdown*/}{/*Todo: maybe we can get this from the todoist user settings*/}
         <SettingsRow displayName='Time format'/>{/*Todo: this should be a toggle switch*/}
         <SettingsRow displayName='"Today" label to apply'/>
         <SettingsRow displayName='"Tomorrow" label to apply'/>
