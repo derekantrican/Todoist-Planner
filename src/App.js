@@ -32,8 +32,6 @@ const convertMarkdown = (text) => {
   return null;
 }
 
-//Reference video for Any.do daily planner: https://youtu.be/4_Wvv7eDgdY
-
 function LoadingView() {
   return (
     <div style={{margin: 'auto'}}>
