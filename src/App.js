@@ -15,8 +15,11 @@ import {
 } from '@mui/material'; //Todo: we're probably not really utililizing much of MUI - maybe we can get rid of it
 import './App.css';
 import "bootstrap-icons/font/bootstrap-icons.css";
-import { todoistCompleteTask, todoistGetLabels, todoistGetTasks, todoistUpdateTask } from './todoistApi';
-import { nextWeek, todayPlusDays, todayWithHour, todayWithTime } from './utils';
+import { todoistCompleteTask, todoistGetLabels, todoistGetTasks, todoistUpdateTask } from './helpers/todoistApi';
+import { nextWeek, todayPlusDays, todayWithHour, todayWithTime } from './helpers/utils';
+import { readSettings } from './helpers/settings';
+import { SettingsView } from './views/settingsView';
+import { FinalMessage } from './views/finalMessageView';
 
 const darkTheme = createTheme({
   palette: {
@@ -39,29 +42,6 @@ function LoadingView() {
       <Typography sx={{marginTop: 10}}>Getting your tasks...</Typography>
     </div>
   );
-}
-
-function FinalMessage() {
-  const messageLines = [
-    "TODAY",
-    "IS THE",
-    "DAY!",
-  ];
-
-  useEffect(() => {
-    (function() {
-      var items = Array.from(document.getElementById('final-message').children);
-      items.forEach((e, i) => setTimeout(() => e.style.visibility = 'visible', 500 * i));
-    })();
-  }, []);
-
-  return (
-    <div id="final-message" style={{marginTop: 'auto', marginBottom: 'auto'}}>
-      {messageLines.map(line =>
-        <Typography key={line} style={{visibility: 'hidden'}} variant="h3" sx={{color: 'deepskyblue'}}>{line}</Typography>
-      )}
-    </div>
-  )
 }
 
 function PickerDialog(props) {
@@ -143,6 +123,7 @@ function App() {
   const [actionPanelType, setActionPanelType] = useState('primary');
 
   const [loading, setLoading] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [todoistLabels, setTodoistLabels] = useState([]);
 
@@ -153,7 +134,6 @@ function App() {
   useEffect(() => {
     async function populateTodoistItems() {
       const data = await todoistGetTasks(); //Todo: in the public version, we'll need to catch auth errors and show an auth prompt instead
-      //Todo: catch errors (eg 'failed to fetch') and show a message rather than an 'infinite loading' screen
 
       //Replace markdown links like '[some link](www.google.com)' to 'some link' for easier reading
       //(I could also let these go through showdown.js and be rendered, but I don't know if I want to
@@ -169,9 +149,17 @@ function App() {
       const data = await todoistGetLabels();
       setTodoistLabels(data);
     }
-    
-    populateTodoistItems();
-    populateTodoistLabels();
+
+    const settings = readSettings();
+
+    if (settings.todoistApiKey) {
+      populateTodoistItems();
+      populateTodoistLabels();
+    }
+    else {
+      setShowSettings(true);
+      setLoading(false);
+    }
   }, []);
 
   const itemStyle = {
@@ -285,6 +273,7 @@ function App() {
     <ThemeProvider theme={darkTheme}>
       <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'end', height: '100%', overflow: 'hidden'}}>
         {loading ? <LoadingView/> : 
+          showSettings ? <SettingsView/> : // Todo: this should instead be a modal dialog or something so a user can change the settings later
           tasks.length === 0 ? <FinalMessage/> : //Todo: show a "no tasks for today" message instead of the FinalMessage if there were initially no tasks
           <React.Fragment>
             <div style={{top: 0, position: 'absolute'}}>
@@ -327,27 +316,27 @@ function App() {
               </div>
               <div style={{display: actionPanelType === 'today' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-between', overflowX: 'auto'}}>
                 <ActionButton text="Don't&nbsp;Set Time" color='success' icon='bell-slash' size='40'
-                  onClick={() => rescheduleCurrentTask(todayPlusDays(0), 'SELECTED_TODAY')} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(todayPlusDays(0), 'SELECTED_TODAY' /*Todo: get 'today label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
                 <TextActionButton text='Morning' innerText='10' size='40' color='success'
-                  onClick={() => rescheduleCurrentTask(todayWithHour(10), 'SELECTED_TODAY')} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(todayWithHour(10), 'SELECTED_TODAY' /*Todo: get 'today label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
                 <TextActionButton text='Noon' innerText='12' size='40' color='success'
-                  onClick={() => rescheduleCurrentTask(todayWithHour(12), 'SELECTED_TODAY')} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(todayWithHour(12), 'SELECTED_TODAY' /*Todo: get 'today label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
                 <TextActionButton text='Afternoon' innerText='15' size='40' color='success'
-                  onClick={() => rescheduleCurrentTask(todayWithHour(15), 'SELECTED_TODAY')} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(todayWithHour(15), 'SELECTED_TODAY' /*Todo: get 'today label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
                 <TextActionButton text='Evening' innerText='19' size='40' color='success'
-                  onClick={() => rescheduleCurrentTask(todayWithHour(19), 'SELECTED_TODAY')} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(todayWithHour(19), 'SELECTED_TODAY' /*Todo: get 'today label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
                 <TextActionButton text='Other' innerText='?' color='success' icon='question' size='40'
-                  onClick={() => rescheduleCurrentTask('other', 'SELECTED_TODAY')} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask('other', 'SELECTED_TODAY' /*Todo: get 'today label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
               </div>
               <div style={{display: actionPanelType === 'later' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-between'}}>
                 <ActionButton text='Tomorrow' color='warning' icon='chevron-right' size='50'
-                  onClick={() => rescheduleCurrentTask(todayPlusDays(1))} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(todayPlusDays(1) /*Todo: get 'tomorrow label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
                 <ActionButton text='In 2 days' color='warning' icon='chevron-double-right' size='50'
-                  onClick={() => rescheduleCurrentTask(todayPlusDays(2))} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(todayPlusDays(2) /*Todo: get 'other label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
                 <ActionButton text='Next week' color='warning' icon='chevron-bar-right' size='50'
-                  onClick={() => rescheduleCurrentTask(nextWeek())} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(nextWeek() /*Todo: get 'other label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
                 <ActionButton text='Someday' color='warning' icon='question' size='50'
-                  onClick={() => rescheduleCurrentTask('someday')} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask('someday' /*Todo: get 'other label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
               </div>
             </div>
           </React.Fragment>

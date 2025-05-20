@@ -1,14 +1,12 @@
+import { readSettings } from "./settings";
+
 const todoistRestApiBase = 'https://api.todoist.com/rest/v2';
 const todoistSyncApi = 'https://api.todoist.com/sync/v9/sync';
-
-export function getApiKeyFromSettings() { //Todo: when we have more settings, this should probably move to a Settings.js class
-  return localStorage.getItem('todoistApiKey');
-}
 
 export async function todoistGetTasks() {
   const response = await fetch(`${todoistRestApiBase}/tasks?filter=today|overdue`, {
     headers: {
-      'Authorization' : `Bearer ${getApiKeyFromSettings()}`,
+      'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
     },
   });
   
@@ -18,7 +16,7 @@ export async function todoistGetTasks() {
 export async function todoistGetLabels() {
   const response = await fetch(`${todoistRestApiBase}/labels`, {
     headers: {
-      'Authorization' : `Bearer ${getApiKeyFromSettings()}`,
+      'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
     },
   });
   
@@ -29,7 +27,7 @@ export async function todoistUpdateTask(id, data) {
   await fetch(todoistSyncApi, {
       method: 'post',
       headers: {
-        'Authorization' : `Bearer ${getApiKeyFromSettings()}`,
+        'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
         'Content-Type' : 'application/x-www-form-urlencoded',
       },
       body: [
@@ -51,7 +49,7 @@ export async function todoistCompleteTask(id) {
   await fetch(`${todoistRestApiBase}/tasks/${id}/close`, {
     method: 'post',
     headers: {
-      'Authorization' : `Bearer ${getApiKeyFromSettings()}`,
+      'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
     },
   });
 };
@@ -60,7 +58,7 @@ export async function todoistDeleteTask(id) {
   const response = await fetch(`${todoistRestApiBase}/tasks/${id}`, {
     method: 'delete',
     headers: {
-      'Authorization' : `Bearer ${getApiKeyFromSettings()}`,
+      'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
     },
   });
   
