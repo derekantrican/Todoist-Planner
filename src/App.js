@@ -227,27 +227,27 @@ function App() {
               </div>
               <div style={{display: actionPanelType === 'today' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-between', overflowX: 'auto'}}>
                 <ActionButton text="Don't&nbsp;Set Time" color='success' icon='bell-slash' size='30'
-                  onClick={() => rescheduleCurrentTask(todayPlusDays(0), 'SELECTED_TODAY' /*Todo: get 'today label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(todayPlusDays(0), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
                 <TextActionButton text='Morning' innerText='10' size='40' color='success'
-                  onClick={() => rescheduleCurrentTask(todayWithHour(10), 'SELECTED_TODAY' /*Todo: get 'today label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(todayWithHour(10), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
                 <TextActionButton text='Noon' innerText='12' size='40' color='success'
-                  onClick={() => rescheduleCurrentTask(todayWithHour(12), 'SELECTED_TODAY' /*Todo: get 'today label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(todayWithHour(12), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
                 <TextActionButton text='Afternoon' innerText='15' size='40' color='success'
-                  onClick={() => rescheduleCurrentTask(todayWithHour(15), 'SELECTED_TODAY' /*Todo: get 'today label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(todayWithHour(15), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
                 <TextActionButton text='Evening' innerText='19' size='40' color='success'
-                  onClick={() => rescheduleCurrentTask(todayWithHour(19), 'SELECTED_TODAY' /*Todo: get 'today label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(todayWithHour(19), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
                 <TextActionButton text='Other' innerText='?' color='success' icon='question' size='40'
-                  onClick={() => rescheduleCurrentTask('other', 'SELECTED_TODAY' /*Todo: get 'today label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask('other', settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
               </div>
               <div style={{display: actionPanelType === 'later' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-between'}}>
                 <ActionButton text='Tomorrow' color='warning' icon='chevron-right' size='50'
-                  onClick={() => rescheduleCurrentTask(todayPlusDays(1) /*Todo: get 'tomorrow label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(todayPlusDays(1), settings.tomorrowLabel)} enabled={!currentPrimaryItemAnimation}/>
                 <ActionButton text='In 2 days' color='warning' icon='chevron-double-right' size='50'
-                  onClick={() => rescheduleCurrentTask(todayPlusDays(2) /*Todo: get 'other label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(todayPlusDays(2), settings.otherLabel)} enabled={!currentPrimaryItemAnimation}/>
                 <ActionButton text='Next week' color='warning' icon='chevron-bar-right' size='50'
-                  onClick={() => rescheduleCurrentTask(nextWeek(settings.next_week) /*Todo: get 'other label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask(nextWeek(settings.next_week), settings.otherLabel)} enabled={!currentPrimaryItemAnimation}/>
                 <ActionButton text='Someday' color='warning' icon='question' size='50'
-                  onClick={() => rescheduleCurrentTask('someday' /*Todo: get 'other label' from settings*/)} enabled={!currentPrimaryItemAnimation}/>
+                  onClick={() => rescheduleCurrentTask('someday', settings.otherLabel)} enabled={!currentPrimaryItemAnimation}/>
               </div>
             </div>
           </React.Fragment>

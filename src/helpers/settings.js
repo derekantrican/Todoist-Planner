@@ -1,5 +1,9 @@
 const defaultSettings = {
   todoistApiKey: '',
+  taskFilter: 'today|overdue',
+  todayLabel: '',
+  tomorrowLabel: '',
+  otherLabel: '',
 };
 
 export let settings;
