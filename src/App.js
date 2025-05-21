@@ -15,6 +15,7 @@ import { FinalMessage } from './views/finalMessageView';
 import { PickerDialog } from './views/pickerDialog';
 import { LoadingView } from './views/loadingView';
 import { ActionButton, TextActionButton } from './views/actionButton';
+import { NoTasksView } from './views/noTasks';
 
 const darkTheme = createTheme({
   palette: {
@@ -29,6 +30,7 @@ function App() {
 
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [noTasks, setNoTasks] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [todoistLabels, setTodoistLabels] = useState([]);
 
@@ -46,7 +48,9 @@ function App() {
       const markdownLinkRegex = /\[(.*)\]\(.*\)/;
       data.forEach(t => t.content = markdownLinkRegex.test(t.content) ? t.content.replace(markdownLinkRegex, "$1") : t.content);
 
-      //Todo: if no tasks are found, we should show that instead of the FinalMessageView
+      if (data.length == 0) {
+        setNoTasks(true); //If we get 0 tasks back from this filter, we should let the user know
+      }
 
       setTasks(data);
       setLoading(false);
@@ -183,7 +187,8 @@ function App() {
       <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'end', height: '100%', overflow: 'hidden'}}>
         {loading ? <LoadingView/> : 
           showSettings ? <SettingsView/> : // Todo: this should instead be a modal dialog or something so a user can change the settings later
-          tasks.length === 0 ? <FinalMessage/> : //Todo: show a "no tasks for today" message instead of the FinalMessage if there were initially no tasks
+          noTasks ? <NoTasksView/> :
+          tasks.length === 0 ? <FinalMessage/> :
           <React.Fragment>
             <div style={{top: 0, position: 'absolute'}}>
               {visibleItemsDoneAnimating && tasks.length > 0 ?
