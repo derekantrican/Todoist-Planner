@@ -1,25 +1,32 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Typography } from "@mui/material";
+import { randomInt } from "../helpers/utils";
 
 export function FinalMessage() {
-  const messageLines = [
-    "TODAY",
-    "IS THE",
-    "DAY!",
-  ]; // Todo: Perhaps we can have other short messages like "you got this!" or whatever and choose one at random
+  const messages = [
+    ["TODAY", "IS THE", "DAY!"],
+    ["YOU", "GOT", "THIS!"],
+    ["NOTHING", "CAN", "STOP YOU!"],
+  ];
+
+  const ref = useRef(null);
+  const [chosenMessage] = useState(() => messages[randomInt(0, messages.length - 1)]);
 
   useEffect(() => {
-    (function() {
-      var items = Array.from(document.getElementById('final-message').children);
-      items.forEach((e, i) => setTimeout(() => e.style.visibility = 'visible', 500 * i));
-    })();
+    Array.from(ref.current.children).forEach((e, i) => {
+      setTimeout(() => {
+        e.style.visibility = 'visible';
+      }, 500 * i);
+    });
   }, []);
 
   return (
-    <div id="final-message" style={{marginTop: 'auto', marginBottom: 'auto'}}>
-      {messageLines.map(line =>
-        <Typography key={line} style={{visibility: 'hidden'}} variant="h3" sx={{color: 'deepskyblue'}}>{line}</Typography>
-      )}
+    <div ref={ref} id="final-message" style={{ marginTop: 'auto', marginBottom: 'auto' }}>
+      {chosenMessage.map((line, index) => (
+        <Typography key={index} style={{ visibility: 'hidden' }} variant="h3" sx={{ color: 'deepskyblue' }}>
+          {line}
+        </Typography>
+      ))}
     </div>
-  )
+  );
 }

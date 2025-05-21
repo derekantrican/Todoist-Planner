@@ -62,7 +62,7 @@ function App() {
       const markdownLinkRegex = /\[(.*)\]\(.*\)/;
       data.forEach(t => t.content = markdownLinkRegex.test(t.content) ? t.content.replace(markdownLinkRegex, "$1") : t.content);
 
-      if (data.length == 0) {
+      if (data.length === 0) {
         setNoTasks(true); //If we get 0 tasks back from this filter, we should let the user know
       }
 

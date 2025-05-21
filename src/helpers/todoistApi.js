@@ -1,11 +1,11 @@
-import { readSettings, settings } from "./settings";
+import { settings } from "./settings";
 
 const todoistRestApiBase = 'https://api.todoist.com/api/v1';
 
 export async function todoistUpdateSettingsFromTodoist() {
   const response = await fetch(`${todoistRestApiBase}/user`, {
     headers: {
-      'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
+      'Authorization' : `Bearer ${settings.todoistApiKey}`,
     },
   });
 
@@ -16,9 +16,9 @@ export async function todoistUpdateSettingsFromTodoist() {
 }
 
 export async function todoistGetTasks() {
-  const response = await fetch(`${todoistRestApiBase}/tasks/filter?query=today|overdue`, {
+  const response = await fetch(`${todoistRestApiBase}/tasks/filter?query=${settings.taskFilter ?? 'today|overdue'}`, {
     headers: {
-      'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
+      'Authorization' : `Bearer ${settings.todoistApiKey}`,
     },
   });
   
@@ -28,7 +28,7 @@ export async function todoistGetTasks() {
 export async function todoistGetLabels() {
   const response = await fetch(`${todoistRestApiBase}/labels`, {
     headers: {
-      'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
+      'Authorization' : `Bearer ${settings.todoistApiKey}`,
     },
   });
   
@@ -39,7 +39,7 @@ export async function todoistUpdateTask(id, data) {
   await fetch(`${todoistRestApiBase}/sync`, {
       method: 'post',
       headers: {
-        'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
+        'Authorization' : `Bearer ${settings.todoistApiKey}`,
         'Content-Type' : 'application/x-www-form-urlencoded',
       },
       body: [
@@ -60,7 +60,7 @@ export async function todoistCompleteTask(id) {
   await fetch(`${todoistRestApiBase}/tasks/${id}/close`, {
     method: 'post',
     headers: {
-      'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
+      'Authorization' : `Bearer ${settings.todoistApiKey}`,
     },
   });
 };
@@ -69,7 +69,7 @@ export async function todoistDeleteTask(id) {
   await fetch(`${todoistRestApiBase}/tasks/${id}`, {
     method: 'delete',
     headers: {
-      'Authorization' : `Bearer ${readSettings().todoistApiKey}`,
+      'Authorization' : `Bearer ${settings.todoistApiKey}`,
     },
   });
 };
