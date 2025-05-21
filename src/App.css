@@ -54,3 +54,11 @@ h3 > p { /*Clear margin from showdown.js*/
     margin: 0;
   }
 }
+
+.todoistTaskItem {
+  border-radius: 50%;
+  background-color: red;
+  height: 15px;
+  width: 15px;
+  margin: 5px;
+}

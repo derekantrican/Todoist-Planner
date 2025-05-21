@@ -89,14 +89,6 @@ function App() {
     }
   }, []);
 
-  const itemStyle = { //Todo: this should be moved into App.css
-    borderRadius: '50%',
-    backgroundColor: 'red',
-    height: 15,
-    width: 15,
-    margin: 5,
-  };
-
   const checkForVisibleItemsAnimationFinished = (e) => {
     var animatedElement = e.target;
 
@@ -217,7 +209,7 @@ function App() {
             <div id="taskContainer" style={{display: 'flex', flexDirection: 'row', alignItems: 'end', marginLeft: '50%', height: 40}}>
               {tasks.map(t =>
                 <div key={t.id} id ={t.id} className={!visibleItemsDoneAnimating ? "slideInAnimation" : ""} onAnimationEnd={animationEnd}>
-                  <div style={{...itemStyle, marginBottom: visibleItemsDoneAnimating && t === tasks[0] ? 20 : 5}}/>
+                  <div className='todoistTaskItem' style={{marginBottom: visibleItemsDoneAnimating && t === tasks[0] ? 20 : 5}}/>
                 </div>
               )}
             </div>
