@@ -23,6 +23,20 @@ const darkTheme = createTheme({
   },
 });
 
+const Label = (props) => {
+  var matchingLabelData = props.todoistLabels.find(label => label.name === props.name);
+  if (!matchingLabelData) {
+    return null;
+  }
+
+  return (
+    <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
+      <i style={{margin: 5, color: matchingLabelData.color}} className='bi bi-tag-fill'/>
+      <Typography>{props.name}</Typography>
+    </div>
+  );
+}
+
 function App() {
   const [visibleItemsDoneAnimating, setVisibleItemsDoneAnimating] = useState(false);
   const [currentPrimaryItemAnimation, setCurrentPrimaryItemAnimation] = useState(null);
@@ -75,7 +89,7 @@ function App() {
     }
   }, []);
 
-  const itemStyle = {
+  const itemStyle = { //Todo: this should be moved into App.css
     borderRadius: '50%',
     backgroundColor: 'red',
     height: 15,
@@ -194,23 +208,11 @@ function App() {
               {visibleItemsDoneAnimating && tasks.length > 0 ?
                 <Typography variant="h3" sx={{margin: '5px', width: 'calc(100% - 16px - 10px)' /*16 is body margin, 10 is this margin*/}}
                   dangerouslySetInnerHTML={{__html:  convertMarkdown(tasks[0].content)}} />
-                : null
-              }
-              {/*Todo: maybe show the current scheduling data for a task. Like "Today at 3:30pm" or "Every Monday at 5pm"*/}
-              {visibleItemsDoneAnimating && tasks.length > 0 ? tasks[0].labels.map(l => {
-                var matchingLabelData = todoistLabels.find(label => label.name === l);
-                if (!matchingLabelData) {
-                  return null;
-                }
-
-                return (
-                  <div key={l} style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
-                    <i style={{margin: 5, color: matchingLabelData.color}} className='bi bi-tag-fill'/>
-                    <Typography>{l}</Typography>
-                  </div>
-                );
-              })
               : null}
+              {/*Todo: maybe show the current scheduling data for a task. Like "Today at 3:30pm" or "Every Monday at 5pm"*/}
+              {visibleItemsDoneAnimating && tasks.length > 0 ? tasks[0].labels.map(l => 
+                <Label key={l} todoistLabels={todoistLabels} name={l}/>
+              ) : null}
             </div>
             <div id="taskContainer" style={{display: 'flex', flexDirection: 'row', alignItems: 'end', marginLeft: '50%', height: 40}}>
               {tasks.map(t =>
