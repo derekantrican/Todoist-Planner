@@ -13,11 +13,6 @@ function SettingsRow(props) {
   )
 }
 
-// Settings view:
-// - Ability to change the filter query (default: 'today | overdue') for what tasks to use in this app
-// - (maybe) ability to customize the time options for "today" reschedules
-// - (optional) default labels to apply for "today" tasks and "other" (not today) tasks
-
 export function SettingsView() {
   const saveSettings = () => {
     //Todo: update values in local storage (and refresh page?)
