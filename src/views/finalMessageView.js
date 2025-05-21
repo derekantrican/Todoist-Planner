@@ -6,7 +6,7 @@ export function FinalMessage() {
   const messages = [
     ["TODAY", "IS THE", "DAY!"],
     ["YOU", "GOT", "THIS!"],
-    ["NOTHING", "CAN", "STOP YOU!"],
+    ["NOTHING", "CAN", "STOP", "YOU!"],
   ];
 
   const ref = useRef(null);
