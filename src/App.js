@@ -4,7 +4,7 @@ import {
   Typography,
   ThemeProvider,
   createTheme,
-} from '@mui/material'; //Todo: we're probably not really utililizing much of MUI - maybe we can get rid of it
+} from '@mui/material';
 import './App.css';
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { todoistCompleteTask, todoistGetLabels, todoistGetTasks, todoistUpdateSettingsFromTodoist, todoistUpdateTask } from './helpers/todoistApi';
@@ -54,7 +54,7 @@ function App() {
 
   useEffect(() => {
     async function populateTodoistItems() {
-      const data = (await todoistGetTasks()).results; //Todo: in the public version, we'll need to catch auth errors and show an auth prompt instead
+      const data = (await todoistGetTasks()).results;
 
       //Replace markdown links like '[some link](www.google.com)' to 'some link' for easier reading
       //(I could also let these go through showdown.js and be rendered, but I don't know if I want to
@@ -78,10 +78,17 @@ function App() {
     const settings = readSettings();
 
     if (settings.todoistApiKey) {
-      populateTodoistItems();
-      populateTodoistLabels();
-
-      todoistUpdateSettingsFromTodoist();
+      Promise.all([
+        populateTodoistItems(),
+        populateTodoistLabels(),
+  
+        todoistUpdateSettingsFromTodoist(),
+      ]).catch(e => {
+        console.log(e);
+        alert('Problem getting data from todoist - please check your API token');
+        setShowSettings(true);
+        setLoading(false);
+      });
     }
     else {
       setShowSettings(true);
