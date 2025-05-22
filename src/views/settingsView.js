@@ -1,33 +1,45 @@
 import { Button, Input, Typography } from '@mui/material';
-import React from 'react';
+import React, { useState } from 'react';
+import { readSettings, saveSettings } from '../helpers/settings';
 
 function SettingsRow(props) {
   //Todo: this could look better. Maybe a groupbox-type view?
-  //Todo: need to set value
-  //Todo: need to handle updating value in settings object
   return (
     <div style={{display: 'flex', alignItems: 'center', gap: 10, marginTop: 10}}>
       <Typography>{props.displayName}</Typography>
-      <Input sx={{flexGrow: 1}} onChange={props.onChange}/>
+      <Input sx={{flexGrow: 1}} onChange={props.onChange} value={props.value}/>
     </div>
   )
 }
 
 export function SettingsView() {
-  const saveSettings = () => {
-    //Todo: update values in local storage (and refresh page?)
+  const [modifiedSettings, setModifiedSettings] = useState(readSettings());
+
+  const handleSettingChange = (name, e) => {
+    setModifiedSettings({...modifiedSettings, [name]: e.target.value});
+  }
+
+
+  const saveChanges = () => {
+    if (!modifiedSettings.todoistApiKey) {
+      alert('API Key is required for this application');
+      return;
+    }
+
+    saveSettings(modifiedSettings);
+    window.location.reload();
   }
 
   return (
     <React.Fragment>
       <div style={{width: 'calc(100% - 30px)', height: '100%', display: 'flex', flexDirection: 'column', padding: 15}}>
         <Typography variant='h4' sx={{alignSelf: 'center'}}>Settings</Typography>
-        <SettingsRow displayName='Todoist API Key' onChange={e => console.log(e.target.value)}/>{/*Todo: this should be an "auth todoist" button that follows the auth flow: https://developer.todoist.com/guides/#authorization*/}
-        <SettingsRow displayName='Task filter'/>
-        <SettingsRow displayName='"Today" label to apply'/>
-        <SettingsRow displayName='"Tomorrow" label to apply'/>
-        <SettingsRow displayName='"Other" label to apply'/>
-        <Button variant='contained' sx={{marginTop: 'auto'}} onClick={saveSettings}>Save</Button>
+        <SettingsRow displayName='Todoist API Key' value={modifiedSettings.todoistApiKey} onChange={e => handleSettingChange('todoistApiKey', e)}/>{/*Todo: this should be an "auth todoist" button that follows the auth flow: https://developer.todoist.com/guides/#authorization*/}
+        <SettingsRow displayName='Task filter' value={modifiedSettings.taskFilter} onChange={e => handleSettingChange('taskFilter', e)}/>
+        <SettingsRow displayName='"Today" label to apply' value={modifiedSettings.todayLabel} onChange={e => handleSettingChange('todayLabel', e)}/>
+        <SettingsRow displayName='"Tomorrow" label to apply' value={modifiedSettings.tomorrowLabel} onChange={e => handleSettingChange('tomorrowLabel', e)}/>
+        <SettingsRow displayName='"Other" label to apply' value={modifiedSettings.otherLabel} onChange={e => handleSettingChange('otherLabel', e)}/>
+        <Button variant='contained' sx={{marginTop: 'auto'}} onClick={saveChanges}>Save</Button>
         <div style={{display: 'grid', marginTop: 5, gridTemplateColumns: 'auto auto', gap: 10}}>
           {/*Todo: tweak the styles here - they're not the best (they also don't look great on different screen sizes - the images should probably have a fixed ratio)*/}
           <a href='https://github.com/derekantrican/Todoist-Planner' target='_blank' rel='noreferrer'>

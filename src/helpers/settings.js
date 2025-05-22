@@ -15,3 +15,8 @@ export function readSettings() {
 
   return settings;
 }
+
+export function saveSettings(modifiedSettings) {
+  localStorage.setItem('settings', JSON.stringify(modifiedSettings));
+  settings = modifiedSettings;
+}
