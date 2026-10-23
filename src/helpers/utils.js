@@ -1,4 +1,3 @@
-import Showdown from "showdown";
 import dayjs from "dayjs";
 
 export function todayWithHour(hour) {
@@ -37,14 +36,6 @@ Date.prototype.yyyyMMdd = function () {
 export function toFloatingDateTime(date) {
   var pad = n => n.toString().padStart(2, '0');
   return `${date.yyyyMMdd()}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-}
-
-export function convertMarkdown(text) {
-  if (text) {
-    return new Showdown.Converter().makeHtml(text);
-  }
-
-  return null;
 }
 
 export function greeting() {

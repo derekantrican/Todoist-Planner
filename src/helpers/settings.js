@@ -10,7 +10,8 @@ export let settings;
 
 export function readSettings() {
   if (!settings) {
-    settings = JSON.parse(localStorage.getItem('settings')) ?? defaultSettings;
+    //Start from the defaults so settings added after the user last saved still get a value
+    settings = {...defaultSettings, ...JSON.parse(localStorage.getItem('settings'))};
   }
 
   return settings;

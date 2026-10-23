@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { todoistCompleteTask, todoistGetLabels, todoistGetTasks, todoistUpdateSettingsFromTodoist, todoistUpdateTask } from './helpers/todoistApi';
-import { convertMarkdown, describeDue, greeting, isOverdue, nextWeek, toFloatingDateTime, todayPlusDays, todayWithHour, todoistColor } from './helpers/utils';
+import { describeDue, greeting, isOverdue, nextWeek, toFloatingDateTime, todayPlusDays, todayWithHour, todoistColor } from './helpers/utils';
 import { readSettings, settings } from './helpers/settings';
 import { SettingsView } from './views/settingsView';
 import { FinalMessage } from './views/finalMessageView';
@@ -11,6 +11,7 @@ import { PickerDialog } from './views/pickerDialog';
 import { LoadingView } from './views/loadingView';
 import { ActionButton } from './views/actionButton';
 import { NoTasksView } from './views/noTasks';
+import { TaskContent } from './views/taskContent';
 
 const screenMargin = 16;
 const todoistRed = 'var(--todoist-red)';
@@ -67,13 +68,7 @@ function App() {
 
   useEffect(() => {
     async function populateTodoistItems() {
-      const data = await todoistGetTasks();
-
-      //Replace markdown links like '[some link](www.google.com)' to 'some link' for easier reading
-      //(I could also let these go through showdown.js and be rendered, but I don't know if I want to
-      //encourage clicking off the app during planning as it would have to start over)
-      const markdownLinkRegex = /\[(.*)\]\(.*\)/;
-      data.forEach(t => t.content = markdownLinkRegex.test(t.content) ? t.content.replace(markdownLinkRegex, "$1") : t.content);
+      const data = await todoistGetTasks(); //Markdown links in task names are shown as plain text by TaskContent
 
       if (data.length === 0) {
         setNoTasks(true); //If we get 0 tasks back from this filter, we should let the user know
@@ -146,7 +141,7 @@ function App() {
     }
     else if (currentPrimaryItemAnimation === 'slideInOthers') {
       //Remove the handled task and go back to the top of the list (even if the user had picked a task further down)
-      setTasks(tasks.filter(t => t !== currentTask));
+      setTasks(currentTasks => currentTasks.filter(t => t.id !== currentTask.id));
       setActiveTaskId(null);
       setCurrentPrimaryItemAnimation(null);
     }
@@ -179,9 +174,24 @@ function App() {
     setPickerDialogOpen(true);
   };
 
-  const reportUpdateError = (e) => {
+  //Tasks whose Todoist update failed, waiting to be put back in the list
+  const [tasksToRestore, setTasksToRestore] = useState([]);
+
+  //A failure can come back while the task's removal animation is still running, so wait until it's finished
+  //(and the task is out of the list) before putting the task back at the top of the list
+  useEffect(() => {
+    if (tasksToRestore.length > 0 && !currentPrimaryItemAnimation) {
+      setTasks(currentTasks => [...tasksToRestore.filter(r => !currentTasks.some(t => t.id === r.id)), ...currentTasks]);
+      setTasksToRestore([]);
+      setActiveTaskId(null);
+    }
+  }, [tasksToRestore, currentPrimaryItemAnimation]);
+
+  //Returns a handler for a failed Todoist request about the given task
+  const restoreOnError = (task) => (e) => {
     console.log(e);
-    alert('Problem updating a task in todoist - the change may not have been saved');
+    setTasksToRestore(current => [...current, task]);
+    alert(`Couldn't save the change to "${task.content}" in Todoist, so it's been put back at the top of your list`);
   };
 
   const rescheduleCurrentTask = (rescheduleTo, label) => {
@@ -209,24 +219,26 @@ function App() {
       var currentHasTime = currentDueDate?.includes('T') ?? false;
       var currentIsFloating = currentHasTime && !currentDueDate.endsWith('Z');
 
-      if (rescheduleTo instanceof Date) {
-        var rescheduleHasTime = rescheduleTo.getHours() !== 0;
+      if (rescheduleTo?.date instanceof Date) {
+        //rescheduleTo is {date, hasTime} - hasTime is explicit (rather than "the hour isn't 0") so times like 12:30 AM work
+        var rescheduleDate = rescheduleTo.date;
+        var rescheduleHasTime = rescheduleTo.hasTime;
         if (!rescheduleHasTime && currentHasTime) {
           //If rescheduleTo does not have a time component & the current due date does, then use the time from the latter in rescheduleTo
           var taskDueDateTime = new Date(currentDueDate); //Floating times are parsed as local, 'Z' times are converted to local
-          rescheduleTo = new Date(rescheduleTo.getFullYear(), rescheduleTo.getMonth(), rescheduleTo.getDate(),
-                                  taskDueDateTime.getHours(), taskDueDateTime.getMinutes());
+          rescheduleDate = new Date(rescheduleDate.getFullYear(), rescheduleDate.getMonth(), rescheduleDate.getDate(),
+                                    taskDueDateTime.getHours(), taskDueDateTime.getMinutes());
           rescheduleHasTime = true;
         }
 
         if (!rescheduleHasTime) {
-          payload.due.date = rescheduleTo.yyyyMMdd();
+          payload.due.date = rescheduleDate.yyyyMMdd();
         }
         else if (currentIsFloating) {
-          payload.due.date = toFloatingDateTime(rescheduleTo); //Keep floating times floating (local time, no 'Z')
+          payload.due.date = toFloatingDateTime(rescheduleDate); //Keep floating times floating (local time, no 'Z')
         }
         else {
-          payload.due.date = rescheduleTo.toISOString(); //Send fixed times as UTC with 'Z' (a time without 'Z' is not interpreted as local)
+          payload.due.date = rescheduleDate.toISOString(); //Send fixed times as UTC with 'Z' (a time without 'Z' is not interpreted as local)
         }
       }
 
@@ -235,7 +247,7 @@ function App() {
         payload.labels = [...new Set((currentTask.labels ?? []).concat([label]))];
       }
 
-      todoistUpdateTask(currentTask.id, payload).catch(reportUpdateError);
+      todoistUpdateTask(currentTask.id, payload).catch(restoreOnError(currentTask));
 
       removeCurrentUiItem();
       setActionPanelType('primary');
@@ -243,12 +255,12 @@ function App() {
   };
 
   const completeCurrentTask = () => {
-    todoistCompleteTask(currentTask.id).catch(reportUpdateError);
+    todoistCompleteTask(currentTask.id).catch(restoreOnError(currentTask));
     removeCurrentUiItem();
   };
 
   const deleteCurrentTask = () => {
-    todoistCompleteTask(currentTask.id).catch(reportUpdateError);
+    todoistCompleteTask(currentTask.id).catch(restoreOnError(currentTask));
     removeCurrentUiItem();
   };
 
@@ -269,25 +281,25 @@ function App() {
       </div>
       <div style={{display: actionPanelType === 'today' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-around'}}>
         <ActionButton small text='No time' color='success' icon='bell-slash'
-          onClick={() => rescheduleCurrentTask(todayPlusDays(0), settings.todayLabel)} enabled={actionsEnabled}/>
+          onClick={() => rescheduleCurrentTask({date: todayPlusDays(0), hasTime: false}, settings.todayLabel)} enabled={actionsEnabled}/>
         <ActionButton small text='Morning' innerText='10' color='success'
-          onClick={() => rescheduleCurrentTask(todayWithHour(10), settings.todayLabel)} enabled={actionsEnabled}/>
+          onClick={() => rescheduleCurrentTask({date: todayWithHour(10), hasTime: true}, settings.todayLabel)} enabled={actionsEnabled}/>
         <ActionButton small text='Noon' innerText='12' color='success'
-          onClick={() => rescheduleCurrentTask(todayWithHour(12), settings.todayLabel)} enabled={actionsEnabled}/>
+          onClick={() => rescheduleCurrentTask({date: todayWithHour(12), hasTime: true}, settings.todayLabel)} enabled={actionsEnabled}/>
         <ActionButton small text='Afternoon' innerText='15' color='success'
-          onClick={() => rescheduleCurrentTask(todayWithHour(15), settings.todayLabel)} enabled={actionsEnabled}/>
+          onClick={() => rescheduleCurrentTask({date: todayWithHour(15), hasTime: true}, settings.todayLabel)} enabled={actionsEnabled}/>
         <ActionButton small text='Evening' innerText='19' color='success'
-          onClick={() => rescheduleCurrentTask(todayWithHour(19), settings.todayLabel)} enabled={actionsEnabled}/>
+          onClick={() => rescheduleCurrentTask({date: todayWithHour(19), hasTime: true}, settings.todayLabel)} enabled={actionsEnabled}/>
         <ActionButton small text='Other' color='success' icon='question-lg'
           onClick={() => rescheduleCurrentTask('other', settings.todayLabel)} enabled={actionsEnabled}/>
       </div>
       <div style={{display: actionPanelType === 'later' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-around'}}>
         <ActionButton text='Tomorrow' color='warning' icon='chevron-right'
-          onClick={() => rescheduleCurrentTask(todayPlusDays(1), settings.tomorrowLabel)} enabled={actionsEnabled}/>
+          onClick={() => rescheduleCurrentTask({date: todayPlusDays(1), hasTime: false}, settings.tomorrowLabel)} enabled={actionsEnabled}/>
         <ActionButton text='In 2 days' color='warning' icon='chevron-double-right'
-          onClick={() => rescheduleCurrentTask(todayPlusDays(2), settings.otherLabel)} enabled={actionsEnabled}/>
+          onClick={() => rescheduleCurrentTask({date: todayPlusDays(2), hasTime: false}, settings.otherLabel)} enabled={actionsEnabled}/>
         <ActionButton text='Next week' color='warning' icon='chevron-bar-right'
-          onClick={() => rescheduleCurrentTask(nextWeek(settings.next_week), settings.otherLabel)} enabled={actionsEnabled}/>
+          onClick={() => rescheduleCurrentTask({date: nextWeek(settings.next_week), hasTime: false}, settings.otherLabel)} enabled={actionsEnabled}/>
         <ActionButton text='Someday' color='warning' icon='question-lg'
           onClick={() => rescheduleCurrentTask('someday', settings.otherLabel)} enabled={actionsEnabled}/>
       </div>
@@ -331,8 +343,7 @@ function App() {
       <div style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : '', display: 'flex', gap: 14, alignItems: 'flex-start', minHeight: 96, marginTop: 12}}>
         <div style={{width: 22, height: 22, borderRadius: '50%', flexShrink: 0, marginTop: 3, backgroundColor: todoistRed}}/>
         <div style={{minWidth: 0}}>
-          <h2 className='taskTitle' style={{fontSize: 20, fontWeight: 700, lineHeight: 1.3}}
-            dangerouslySetInnerHTML={{__html: convertMarkdown(currentTask.content)}}/>
+          <h2 className='taskTitle' style={{fontSize: 20, fontWeight: 700, lineHeight: 1.3}}><TaskContent content={currentTask.content}/></h2>
           <p className='secondary small' style={{marginTop: 4}}>{describeDue(currentTask.due, settings.time_format)}</p>
           {taskLabels(currentTask)}
         </div>
@@ -356,8 +367,7 @@ function App() {
         </div>
         <div style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : '', margin: 'auto 0', maxWidth: 640}}>
           <p className='secondary small' style={{fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase'}}>Now planning · {tasksLeft}</p>
-          <h2 className='taskTitle' style={{fontSize: 36, fontWeight: 700, lineHeight: 1.2, marginTop: 8}}
-            dangerouslySetInnerHTML={{__html: convertMarkdown(currentTask.content)}}/>
+          <h2 className='taskTitle' style={{fontSize: 36, fontWeight: 700, lineHeight: 1.2, marginTop: 8}}><TaskContent content={currentTask.content}/></h2>
           <p className='secondary' style={{marginTop: 8}}>{describeDue(currentTask.due, settings.time_format)}</p>
           {taskLabels(currentTask)}
         </div>
@@ -378,7 +388,7 @@ function App() {
               <div className={`taskCard${visibleItemsDoneAnimating && t === currentTask ? ' current' : ''}`}
                 role='button' tabIndex={0} aria-pressed={t === currentTask} onClick={() => selectTask(t)}
                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectTask(t); } }}>
-                <div className='taskTitle' style={{fontWeight: 600, lineHeight: 1.35}} dangerouslySetInnerHTML={{__html: convertMarkdown(t.content)}}/>
+                <div className='taskTitle' style={{fontWeight: 600, lineHeight: 1.35}}><TaskContent content={t.content}/></div>
                 <p className='small' style={{marginTop: 4, fontWeight: 600, color: isOverdue(t.due) ? todoistRed : 'var(--primary)'}}>
                   {describeDue(t.due, settings.time_format)}
                 </p>

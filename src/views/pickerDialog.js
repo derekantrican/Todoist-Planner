@@ -72,7 +72,7 @@ export function PickerDialog(props) {
     dayjs(result).format('dddd, MMM D') + (timeText ? ` at ${timeText}` : '');
 
   const onSubmit = () => {
-    props.resultHandler(result);
+    props.resultHandler({date: result, hasTime: !!time}); //An empty time means "no time" (even 00:00 counts as a time)
     props.onClose();
   };
 
