@@ -1,4 +1,5 @@
 import Showdown from "showdown";
+import dayjs from "dayjs";
 
 export function todayWithHour(hour) {
   var today = new Date();
@@ -44,6 +45,48 @@ export function convertMarkdown(text) {
   }
 
   return null;
+}
+
+export function greeting() {
+  var hour = new Date().getHours();
+  return hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+}
+
+//Human readable version of a task's due object, like "Today at 12:00 PM" or "Overdue · Mon, Oct 20 · every Monday"
+export function describeDue(due, timeFormat) {
+  if (!due) {
+    return 'No date';
+  }
+
+  var date = dayjs(due.date); //Floating times are parsed as local, 'Z' times are converted to local
+  var today = dayjs().startOf('day');
+
+  var description = date.isSame(today, 'day') ? 'Today' :
+    date.isSame(today.add(1, 'day'), 'day') ? 'Tomorrow' :
+    date.isBefore(today) ? `Overdue · ${date.format('ddd, MMM D')}` :
+    date.format('ddd, MMM D');
+
+  if (due.is_recurring) {
+    return `${description} · ${due.string}`; //The recurring string usually already includes any time (e.g. "every Mon at 12pm")
+  }
+
+  if (due.date.includes('T')) {
+    description += ` at ${date.format(timeFormat === 24 ? 'HH:mm' : 'h:mm A')}`;
+  }
+
+  return description;
+}
+
+//Todoist returns color names (e.g. "berry_red") rather than CSS colors
+const todoistColors = {
+  berry_red: '#b8256f', red: '#db4035', orange: '#ff9933', yellow: '#fad000', olive_green: '#afb83b',
+  lime_green: '#7ecc49', green: '#299438', mint_green: '#6accbc', teal: '#158fad', sky_blue: '#14aaf5',
+  light_blue: '#96c3eb', blue: '#4073ff', grape: '#884dff', violet: '#af38eb', lavender: '#eb96eb',
+  magenta: '#e05194', salmon: '#ff8d85', charcoal: '#808080', grey: '#b8b8b8', taupe: '#ccac93',
+};
+
+export function todoistColor(name) {
+  return todoistColors[name];
 }
 
 export function randomInt(min, max) {

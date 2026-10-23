@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import {
+  IconButton,
   Typography,
   ThemeProvider,
   createTheme,
@@ -8,16 +9,19 @@ import {
 import './App.css';
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { todoistCompleteTask, todoistGetLabels, todoistGetTasks, todoistUpdateSettingsFromTodoist, todoistUpdateTask } from './helpers/todoistApi';
-import { convertMarkdown, nextWeek, toFloatingDateTime, todayPlusDays, todayWithHour } from './helpers/utils';
+import { convertMarkdown, describeDue, greeting, nextWeek, toFloatingDateTime, todayPlusDays, todayWithHour, todoistColor } from './helpers/utils';
 import { readSettings, settings } from './helpers/settings';
 import { SettingsView } from './views/settingsView';
 import { FinalMessage } from './views/finalMessageView';
 import { PickerDialog } from './views/pickerDialog';
 import { LoadingView } from './views/loadingView';
-import { ActionButton, TextActionButton } from './views/actionButton';
+import { ActionButton } from './views/actionButton';
 import { NoTasksView } from './views/noTasks';
 
 const screenMargin = 16;
+const todoistRed = '#e44332';
+
+const isSettingsPath = () => /\/settings\/?$/.test(window.location.pathname);
 
 const darkTheme = createTheme({
   palette: {
@@ -30,9 +34,9 @@ const Label = (props) => {
   var matchingLabelData = props.todoistLabels.find(label => label.name === props.name);
 
   return (
-    <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
-      <i style={{margin: 5, color: matchingLabelData?.color}} className='bi bi-tag-fill'/>
-      <Typography>{props.name}</Typography>
+    <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 4}}>
+      <i style={{fontSize: 12, color: todoistColor(matchingLabelData?.color)}} className='bi bi-tag-fill'/>
+      <Typography variant='body2' color='text.secondary'>{props.name}</Typography>
     </div>
   );
 }
@@ -44,6 +48,8 @@ function App() {
 
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [settingsCancelable, setSettingsCancelable] = useState(false);
+  const [userFirstName, setUserFirstName] = useState(null);
   const [noTasks, setNoTasks] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [todoistLabels, setTodoistLabels] = useState([]);
@@ -76,14 +82,12 @@ function App() {
     }
 
     const settings = readSettings();
-    const settingsRequested = /\/settings\/?$/.test(window.location.pathname); //Todo: replace with an in-app settings button
-
-    if (settings.todoistApiKey && !settingsRequested) {
+    if (settings.todoistApiKey && !isSettingsPath()) {
       Promise.all([
         populateTodoistItems(),
         populateTodoistLabels(),
-  
-        todoistUpdateSettingsFromTodoist(),
+
+        todoistUpdateSettingsFromTodoist().then(user => setUserFirstName(user.full_name?.split(' ')[0])),
       ]).catch(e => {
         console.log(e);
         alert('Problem getting data from todoist - please check your API token');
@@ -92,10 +96,25 @@ function App() {
       });
     }
     else {
+      setSettingsCancelable(!!settings.todoistApiKey); //Visiting /settings with a saved token can go back to the planner
       setShowSettings(true);
       setLoading(false);
     }
   }, []);
+
+  const openSettings = () => {
+    setSettingsCancelable(true);
+    setShowSettings(true);
+  };
+
+  const closeSettings = () => {
+    if (isSettingsPath()) {
+      window.location.href = window.location.pathname.replace(/\/settings\/?$/, '/'); //Tasks were never loaded, so load the planner
+    }
+    else {
+      setShowSettings(false);
+    }
+  };
 
   const checkForVisibleItemsAnimationFinished = (e) => {
     var animatedElement = e.target;
@@ -212,62 +231,77 @@ function App() {
   return (
     <ThemeProvider theme={darkTheme}>
       <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'end', height: '100%', overflow: 'hidden', padding: screenMargin, boxSizing: 'border-box'}}>
-        {loading ? <LoadingView/> : 
-          showSettings ? <SettingsView/> : // Todo: this should instead be a modal dialog or something so a user can change the settings later
+        {!loading && !showSettings ?
+          <IconButton aria-label='Settings' onClick={openSettings} sx={{position: 'absolute', top: screenMargin / 2, right: screenMargin / 2, color: 'text.secondary'}}>
+            <i style={{fontSize: 20}} className='bi bi-gear'/>
+          </IconButton>
+        : null}
+        {loading ? <LoadingView/> :
+          showSettings ? <SettingsView onCancel={settingsCancelable ? closeSettings : null}/> :
           noTasks ? <NoTasksView/> :
           tasks.length === 0 ? <FinalMessage/> :
           <React.Fragment>
-            <div style={{top: screenMargin, left: screenMargin, right: screenMargin, position: 'absolute'}}>
-              {visibleItemsDoneAnimating && tasks.length > 0 ?
-                <Typography variant="h3" sx={{margin: '5px'}}
-                  dangerouslySetInnerHTML={{__html:  convertMarkdown(tasks[0].content)}} />
-              : null}
-              {/*Todo: maybe show the current scheduling data for a task. Like "Today at 3:30pm" or "Every Monday at 5pm"*/}
-              {visibleItemsDoneAnimating && tasks.length > 0 ? tasks[0].labels.map(l => 
-                <Label key={l} todoistLabels={todoistLabels} name={l}/>
-              ) : null}
+            <div style={{marginBottom: 'auto', paddingTop: 48}}>
+              <Typography variant='h4' sx={{fontWeight: 700, lineHeight: 1.15}}>
+                {greeting()}{userFirstName ? <React.Fragment><br/>{userFirstName},</React.Fragment> : ','}
+              </Typography>
+              <Typography color='text.secondary' sx={{marginTop: 1.5}}>
+                Take a moment to plan your day · {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'} left
+              </Typography>
             </div>
             {/*Negative right margin so the dots still slide in from the edge of the screen rather than from inside the screen margin*/}
             <div id="taskContainer" style={{display: 'flex', flexDirection: 'row', alignItems: 'end', marginLeft: '50%', marginRight: -screenMargin, height: 40}}>
               {tasks.map(t =>
                 <div key={t.id} id ={t.id} className={!visibleItemsDoneAnimating ? "slideInAnimation" : ""} onAnimationEnd={animationEnd}>
-                  <div className='todoistTaskItem' style={{marginBottom: visibleItemsDoneAnimating && t === tasks[0] ? 20 : 5}}/>
+                  <div className='todoistTaskItem' style={visibleItemsDoneAnimating && t === tasks[0] ? {marginBottom: 14, backgroundColor: todoistRed} : null}/>
                 </div>
               )}
             </div>
-            <div style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : '', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: 110}}>
-              <div style={{display: actionPanelType === 'primary' ? 'flex' : 'none' /*Todo: need transition/animation for panel collapse*/, flexDirection: 'row', justifyContent: 'space-between'}}>
-                <ActionButton text='Today' color='success' icon='arrow-down-circle'
+            <div style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : '', display: 'flex', gap: 14, alignItems: 'flex-start', minHeight: 96, marginTop: 12}}>
+              <div style={{width: 22, height: 22, borderRadius: '50%', flexShrink: 0, marginTop: 3, backgroundColor: todoistRed}}/>
+              <div style={{minWidth: 0}}>
+                <Typography variant='h6' className='taskTitle' sx={{fontWeight: 700, lineHeight: 1.3}}
+                  dangerouslySetInnerHTML={{__html: convertMarkdown(tasks[0].content)}}/>
+                <Typography variant='body2' color='text.secondary' sx={{marginTop: 0.5}}>{describeDue(tasks[0].due, settings.time_format)}</Typography>
+                <div style={{display: 'flex', flexWrap: 'wrap', columnGap: 12, marginTop: 4}}>
+                  {tasks[0].labels.map(l => <Label key={l} todoistLabels={todoistLabels} name={l}/>)}
+                </div>
+              </div>
+            </div>
+            <div style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : '', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: 120,
+              margin: `8px ${-screenMargin}px ${-screenMargin}px`, padding: '8px 8px 16px', backgroundColor: '#1e1e1e', borderRadius: '24px 24px 0 0'}}>
+              <div style={{display: actionPanelType === 'primary' ? 'flex' : 'none' /*Todo: need transition/animation for panel collapse*/, flexDirection: 'row', justifyContent: 'space-around'}}>
+                <ActionButton text='Today' color='success' icon='arrow-down'
                   onClick={() => setActionPanelType('today')} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton text='Later' color='warning' icon='arrow-right-circle'
+                <ActionButton text='Later' color='warning' icon='arrow-right'
                   onClick={() => setActionPanelType('later')} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton text='Done' color='info' icon='check-circle'
+                <ActionButton text='Done' color='info' icon='check-lg'
                   onClick={() => completeCurrentTask()} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton text='Delete' color='error' icon='x-circle'
+                <ActionButton text='Delete' color='error' icon='x-lg'
                   onClick={() => deleteCurrentTask()} enabled={!currentPrimaryItemAnimation}/>
               </div>
-              <div style={{display: actionPanelType === 'today' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-between', overflowX: 'auto'}}>
-                <ActionButton text="Don't&nbsp;Set Time" color='success' icon='bell-slash' size='30'
+              <div style={{display: actionPanelType === 'today' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-around'}}>
+                <ActionButton small text='No time' color='success' icon='bell-slash'
                   onClick={() => rescheduleCurrentTask(todayPlusDays(0), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <TextActionButton text='Morning' innerText='10' size='40' color='success'
+                <ActionButton small text='Morning' innerText='10' color='success'
                   onClick={() => rescheduleCurrentTask(todayWithHour(10), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <TextActionButton text='Noon' innerText='12' size='40' color='success'
+                <ActionButton small text='Noon' innerText='12' color='success'
                   onClick={() => rescheduleCurrentTask(todayWithHour(12), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <TextActionButton text='Afternoon' innerText='15' size='40' color='success'
+                <ActionButton small text='Afternoon' innerText='15' color='success'
                   onClick={() => rescheduleCurrentTask(todayWithHour(15), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <TextActionButton text='Evening' innerText='19' size='40' color='success'
+                <ActionButton small text='Evening' innerText='19' color='success'
                   onClick={() => rescheduleCurrentTask(todayWithHour(19), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <TextActionButton text='Other' innerText='?' color='success' icon='question' size='40'
+                <ActionButton small text='Other' color='success' icon='question-lg'
                   onClick={() => rescheduleCurrentTask('other', settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
               </div>
-              <div style={{display: actionPanelType === 'later' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-between'}}>
-                <ActionButton text='Tomorrow' color='warning' icon='chevron-right' size='50'
+              <div style={{display: actionPanelType === 'later' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-around'}}>
+                <ActionButton text='Tomorrow' color='warning' icon='chevron-right'
                   onClick={() => rescheduleCurrentTask(todayPlusDays(1), settings.tomorrowLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton text='In 2 days' color='warning' icon='chevron-double-right' size='50'
+                <ActionButton text='In 2 days' color='warning' icon='chevron-double-right'
                   onClick={() => rescheduleCurrentTask(todayPlusDays(2), settings.otherLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton text='Next week' color='warning' icon='chevron-bar-right' size='50'
+                <ActionButton text='Next week' color='warning' icon='chevron-bar-right'
                   onClick={() => rescheduleCurrentTask(nextWeek(settings.next_week), settings.otherLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton text='Someday' color='warning' icon='question' size='50'
+                <ActionButton text='Someday' color='warning' icon='question-lg'
                   onClick={() => rescheduleCurrentTask('someday', settings.otherLabel)} enabled={!currentPrimaryItemAnimation}/>
               </div>
             </div>

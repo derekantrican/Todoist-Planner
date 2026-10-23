@@ -8,8 +8,15 @@ html, body, #root {
   padding: 0;
 }
 
-h3 > p { /*Clear margin from showdown.js*/
+.taskTitle p { /*Clear margin from showdown.js*/
   margin: 0;
+}
+
+.taskTitle { /*Long task names get cut off after 3 lines*/
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .slideInAnimation {
@@ -57,8 +64,9 @@ h3 > p { /*Clear margin from showdown.js*/
 
 .todoistTaskItem {
   border-radius: 50%;
-  background-color: red;
-  height: 15px;
-  width: 15px;
+  background-color: rgba(228, 67, 50, 0.35); /*Muted Todoist red for upcoming tasks*/
+  height: 18px;
+  width: 18px;
   margin: 5px;
+  transition: margin-bottom 0.3s, background-color 0.3s;
 }

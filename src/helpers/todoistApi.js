@@ -42,6 +42,8 @@ export async function todoistUpdateSettingsFromTodoist() {
 
   settings.next_week = user.next_week; // 1-7 with "1" being "Monday"
   settings.time_format = user.time_format === 0 ? 24 : 12;
+
+  return user;
 }
 
 export async function todoistGetTasks() {
