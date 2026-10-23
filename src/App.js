@@ -17,6 +17,8 @@ import { LoadingView } from './views/loadingView';
 import { ActionButton, TextActionButton } from './views/actionButton';
 import { NoTasksView } from './views/noTasks';
 
+const screenMargin = 16;
+
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
@@ -209,15 +211,15 @@ function App() {
 
   return (
     <ThemeProvider theme={darkTheme}>
-      <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'end', height: '100%', overflow: 'hidden'}}>
+      <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'end', height: '100%', overflow: 'hidden', padding: screenMargin, boxSizing: 'border-box'}}>
         {loading ? <LoadingView/> : 
           showSettings ? <SettingsView/> : // Todo: this should instead be a modal dialog or something so a user can change the settings later
           noTasks ? <NoTasksView/> :
           tasks.length === 0 ? <FinalMessage/> :
           <React.Fragment>
-            <div style={{top: 0, position: 'absolute'}}>
+            <div style={{top: screenMargin, left: screenMargin, right: screenMargin, position: 'absolute'}}>
               {visibleItemsDoneAnimating && tasks.length > 0 ?
-                <Typography variant="h3" sx={{margin: '5px', width: 'calc(100% - 16px - 10px)' /*16 is body margin, 10 is this margin*/}}
+                <Typography variant="h3" sx={{margin: '5px'}}
                   dangerouslySetInnerHTML={{__html:  convertMarkdown(tasks[0].content)}} />
               : null}
               {/*Todo: maybe show the current scheduling data for a task. Like "Today at 3:30pm" or "Every Monday at 5pm"*/}
@@ -225,7 +227,8 @@ function App() {
                 <Label key={l} todoistLabels={todoistLabels} name={l}/>
               ) : null}
             </div>
-            <div id="taskContainer" style={{display: 'flex', flexDirection: 'row', alignItems: 'end', marginLeft: '50%', height: 40}}>
+            {/*Negative right margin so the dots still slide in from the edge of the screen rather than from inside the screen margin*/}
+            <div id="taskContainer" style={{display: 'flex', flexDirection: 'row', alignItems: 'end', marginLeft: '50%', marginRight: -screenMargin, height: 40}}>
               {tasks.map(t =>
                 <div key={t.id} id ={t.id} className={!visibleItemsDoneAnimating ? "slideInAnimation" : ""} onAnimationEnd={animationEnd}>
                   <div className='todoistTaskItem' style={{marginBottom: visibleItemsDoneAnimating && t === tasks[0] ? 20 : 5}}/>

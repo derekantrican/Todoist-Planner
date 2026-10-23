@@ -51,7 +51,7 @@ export function SettingsView() {
 
   return (
     <form onSubmit={saveChanges} style={{height: '100%', overflowY: 'auto'}}>
-      <Stack spacing={2} sx={{maxWidth: 480, minHeight: '100%', margin: '0 auto', padding: 2, boxSizing: 'border-box'}}>
+      <Stack spacing={2} sx={{maxWidth: 480, minHeight: '100%', margin: '0 auto', boxSizing: 'border-box' /*No padding: the app's screen margin already pads this view*/}}>
         <div style={{textAlign: 'center', paddingTop: 16, paddingBottom: 8}}>
           <i style={{fontSize: 48, color: '#e44332'}} className='bi bi-calendar2-check'/>
           <Typography variant='h4' sx={{fontWeight: 600}}>Todoist Planner</Typography>
