@@ -76,4 +76,19 @@ npm run build
 
 ### Deploying
 
-The build is a static site, so it can be hosted anywhere that serves static files. For `/settings` to work, the host needs to serve `index.html` for unknown paths (single-page app fallback). Netlify, Vercel, and Firebase Hosting can all be configured to do this; GitHub Pages returns a 404 by default.
+The app is hosted on GitHub Pages at [todoplus.derekantrican.com](https://todoplus.derekantrican.com). To deploy, run:
+
+```bash
+npm run deploy
+```
+
+This builds the app and pushes `build/` to the `gh-pages` branch using [gh-pages](https://github.com/tschaub/gh-pages). [`public/CNAME`](public/CNAME) is included in every build so GitHub Pages keeps the custom domain.
+
+GitHub Pages has no single-page app fallback, so paths like `/settings` use the [spa-github-pages](https://github.com/rafgraph/spa-github-pages) trick: [`public/404.html`](public/404.html) redirects to `/?/settings`, and a script in [`public/index.html`](public/index.html) turns that back into `/settings` before the app loads.
+
+The custom domain is set up like this:
+
+- **Cloudflare DNS:** a `CNAME` record for `todoplus` pointing to `derekantrican.github.io`, set to *DNS only* (if it's ever proxied, the SSL/TLS mode must be *Full*, not *Flexible*)
+- **Repo Settings → Pages:** Source is *Deploy from a branch* (`gh-pages`, `/ (root)`), custom domain is `todoplus.derekantrican.com`, and *Enforce HTTPS* is on
+
+The build is a plain static site, so it can also be hosted anywhere else that serves static files.
