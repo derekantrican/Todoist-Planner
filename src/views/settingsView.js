@@ -60,7 +60,7 @@ export function SettingsView(props) {
   return (
     <form onSubmit={saveChanges} style={{height: '100%', overflowY: 'auto', position: 'relative'}}>
       {props.onCancel ?
-        <button type='button' className='iconButton' aria-label='Close settings' onClick={props.onCancel} style={{position: 'absolute', top: -8, right: -8}}>
+        <button type='button' className='iconButton' aria-label='Close settings' onClick={props.onCancel} style={{position: 'absolute', top: -8, right: 0 /*A negative right would overflow the scrollable form and add a horizontal scrollbar*/}}>
           <i className='bi bi-x-lg'/>
         </button>
       : null}
