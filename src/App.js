@@ -74,8 +74,9 @@ function App() {
     }
 
     const settings = readSettings();
+    const settingsRequested = /\/settings\/?$/.test(window.location.pathname); //Todo: replace with an in-app settings button
 
-    if (settings.todoistApiKey) {
+    if (settings.todoistApiKey && !settingsRequested) {
       Promise.all([
         populateTodoistItems(),
         populateTodoistLabels(),
