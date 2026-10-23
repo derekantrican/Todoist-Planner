@@ -339,3 +339,96 @@ html, body, #root {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
 }
+
+/* ---------- Desktop planner ---------- */
+
+.desktopPlanner {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  margin: -16px; /*Fill the screen edge to edge (undo the app's screen margin)*/
+}
+
+.desktopMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 56px 64px 40px;
+}
+
+.desktopActions {
+  align-self: center;
+  width: 100%;
+  max-width: 560px;
+  padding: 20px 16px;
+  border-radius: 24px;
+  box-sizing: border-box;
+  background-color: var(--surface);
+}
+
+.desktopQueue {
+  width: 400px;
+  flex-shrink: 0;
+  padding: 16px 24px 0;
+  border-left: 1px solid var(--border);
+  background-color: #161616;
+  overflow: hidden;
+}
+
+.taskCard {
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background-color: var(--surface);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.taskCard.current {
+  border-color: var(--todoist-red);
+  box-shadow: 0 0 0 1px var(--todoist-red);
+}
+
+.flowUpAnimation { /*Cards flow up from the bottom of the screen (staggered with animation-delay)*/
+  animation: flowUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+@keyframes flowUp {
+  from {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+.taskCard.collapse { /*The handled card slides out towards the main panel...*/
+  animation: cardOut 0.35s ease-in forwards;
+}
+
+@keyframes cardOut {
+  to {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+}
+
+.taskCard.slideInOthers { /*...then closes its gap so the rest of the queue moves up*/
+  animation: cardCollapse 0.3s ease-in-out forwards;
+}
+
+@keyframes cardCollapse {
+  from {
+    max-height: 200px;
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+  to {
+    max-height: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+}

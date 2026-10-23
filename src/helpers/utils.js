@@ -52,6 +52,10 @@ export function greeting() {
   return hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 }
 
+export function isOverdue(due) {
+  return !!due && dayjs(due.date).isBefore(dayjs().startOf('day'));
+}
+
 //Human readable version of a task's due object, like "Today at 12:00 PM" or "Overdue · Mon, Oct 20 · every Monday"
 export function describeDue(due, timeFormat) {
   if (!due) {

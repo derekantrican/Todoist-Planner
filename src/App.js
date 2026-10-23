@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { todoistCompleteTask, todoistGetLabels, todoistGetTasks, todoistUpdateSettingsFromTodoist, todoistUpdateTask } from './helpers/todoistApi';
-import { convertMarkdown, describeDue, greeting, nextWeek, toFloatingDateTime, todayPlusDays, todayWithHour, todoistColor } from './helpers/utils';
+import { convertMarkdown, describeDue, greeting, isOverdue, nextWeek, toFloatingDateTime, todayPlusDays, todayWithHour, todoistColor } from './helpers/utils';
 import { readSettings, settings } from './helpers/settings';
 import { SettingsView } from './views/settingsView';
 import { FinalMessage } from './views/finalMessageView';
@@ -16,6 +16,22 @@ const screenMargin = 16;
 const todoistRed = 'var(--todoist-red)';
 
 const isSettingsPath = () => /\/settings\/?$/.test(window.location.pathname);
+
+//Wide screens get the desktop layout (task cards on the right), everything else gets the mobile layout (dot train)
+const desktopQuery = '(min-width: 1100px)';
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia(desktopQuery).matches);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(desktopQuery);
+    const onChange = e => setIsDesktop(e.matches);
+    mediaQuery.addEventListener('change', onChange);
+    return () => mediaQuery.removeEventListener('change', onChange);
+  }, []);
+
+  return isDesktop;
+}
 
 const Label = (props) => {
   //Shared labels aren't returned by /labels (only personal ones are) so they won't have color data - show them with the default color
@@ -30,6 +46,7 @@ const Label = (props) => {
 }
 
 function App() {
+  const isDesktop = useIsDesktop();
   const [visibleItemsDoneAnimating, setVisibleItemsDoneAnimating] = useState(false);
   const [currentPrimaryItemAnimation, setCurrentPrimaryItemAnimation] = useState(null);
   const [actionPanelType, setActionPanelType] = useState('primary');
@@ -108,7 +125,9 @@ function App() {
     var animatedElement = e.target;
 
     if (!visibleItemsDoneAnimating) {
-      if (animatedElement.getBoundingClientRect().left > window.innerWidth || animatedElement.id === tasks[tasks.length - 1].id) {
+      //Done once an item lands off screen (dots off the right on mobile, cards off the bottom on desktop) or the last item lands
+      var rect = animatedElement.getBoundingClientRect();
+      if (rect.left > window.innerWidth || rect.top > window.innerHeight || animatedElement.id === tasks[tasks.length - 1].id) {
         setVisibleItemsDoneAnimating(true);
       }
     }
@@ -216,84 +235,153 @@ function App() {
     removeFirstUiItem();
   };
 
+  const actionsEnabled = !currentPrimaryItemAnimation;
+
+  //The Today/Later/Done/Delete buttons (and the Today & Later sub-panels) - shared by the mobile & desktop layouts
+  const actionPanels = (
+    <React.Fragment>
+      <div style={{display: actionPanelType === 'primary' ? 'flex' : 'none' /*Todo: need transition/animation for panel collapse*/, flexDirection: 'row', justifyContent: 'space-around'}}>
+        <ActionButton text='Today' color='success' icon='arrow-down'
+          onClick={() => setActionPanelType('today')} enabled={actionsEnabled}/>
+        <ActionButton text='Later' color='warning' icon='arrow-right'
+          onClick={() => setActionPanelType('later')} enabled={actionsEnabled}/>
+        <ActionButton text='Done' color='info' icon='check-lg'
+          onClick={() => completeCurrentTask()} enabled={actionsEnabled}/>
+        <ActionButton text='Delete' color='error' icon='x-lg'
+          onClick={() => deleteCurrentTask()} enabled={actionsEnabled}/>
+      </div>
+      <div style={{display: actionPanelType === 'today' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-around'}}>
+        <ActionButton small text='No time' color='success' icon='bell-slash'
+          onClick={() => rescheduleCurrentTask(todayPlusDays(0), settings.todayLabel)} enabled={actionsEnabled}/>
+        <ActionButton small text='Morning' innerText='10' color='success'
+          onClick={() => rescheduleCurrentTask(todayWithHour(10), settings.todayLabel)} enabled={actionsEnabled}/>
+        <ActionButton small text='Noon' innerText='12' color='success'
+          onClick={() => rescheduleCurrentTask(todayWithHour(12), settings.todayLabel)} enabled={actionsEnabled}/>
+        <ActionButton small text='Afternoon' innerText='15' color='success'
+          onClick={() => rescheduleCurrentTask(todayWithHour(15), settings.todayLabel)} enabled={actionsEnabled}/>
+        <ActionButton small text='Evening' innerText='19' color='success'
+          onClick={() => rescheduleCurrentTask(todayWithHour(19), settings.todayLabel)} enabled={actionsEnabled}/>
+        <ActionButton small text='Other' color='success' icon='question-lg'
+          onClick={() => rescheduleCurrentTask('other', settings.todayLabel)} enabled={actionsEnabled}/>
+      </div>
+      <div style={{display: actionPanelType === 'later' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-around'}}>
+        <ActionButton text='Tomorrow' color='warning' icon='chevron-right'
+          onClick={() => rescheduleCurrentTask(todayPlusDays(1), settings.tomorrowLabel)} enabled={actionsEnabled}/>
+        <ActionButton text='In 2 days' color='warning' icon='chevron-double-right'
+          onClick={() => rescheduleCurrentTask(todayPlusDays(2), settings.otherLabel)} enabled={actionsEnabled}/>
+        <ActionButton text='Next week' color='warning' icon='chevron-bar-right'
+          onClick={() => rescheduleCurrentTask(nextWeek(settings.next_week), settings.otherLabel)} enabled={actionsEnabled}/>
+        <ActionButton text='Someday' color='warning' icon='question-lg'
+          onClick={() => rescheduleCurrentTask('someday', settings.otherLabel)} enabled={actionsEnabled}/>
+      </div>
+    </React.Fragment>
+  );
+
+  const taskLabels = (task) => (
+    <div style={{display: 'flex', flexWrap: 'wrap', columnGap: 12, marginTop: 4}}>
+      {task.labels.map(l => <Label key={l} todoistLabels={todoistLabels} name={l}/>)}
+    </div>
+  );
+
+  const tasksLeft = `${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'} left`;
+
+  const showingDesktopPlanner = isDesktop && !loading && !showSettings && !noTasks && tasks.length > 0;
+
+  const settingsButton = (
+    <button type='button' className='iconButton' aria-label='Settings' onClick={openSettings}>
+      <i className='bi bi-gear'/>
+    </button>
+  );
+
+  const mobilePlanner = () => (
+    <React.Fragment>
+      <div style={{marginBottom: 'auto', paddingTop: 48}}>
+        <h1 style={{fontSize: 34, fontWeight: 700, lineHeight: 1.15}}>
+          {greeting()}{userFirstName ? <React.Fragment><br/>{userFirstName},</React.Fragment> : ','}
+        </h1>
+        <p className='secondary' style={{marginTop: 12}}>
+          Take a moment to plan your day · {tasksLeft}
+        </p>
+      </div>
+      {/*Negative right margin so the dots still slide in from the edge of the screen rather than from inside the screen margin*/}
+      <div id="taskContainer" style={{display: 'flex', flexDirection: 'row', alignItems: 'end', marginLeft: '50%', marginRight: -screenMargin, height: 40}}>
+        {tasks.map(t =>
+          <div key={t.id} id ={t.id} className={!visibleItemsDoneAnimating ? "slideInAnimation" : ""} onAnimationEnd={animationEnd}>
+            <div className='todoistTaskItem' style={visibleItemsDoneAnimating && t === tasks[0] ? {marginBottom: 14, backgroundColor: todoistRed} : null}/>
+          </div>
+        )}
+      </div>
+      <div style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : '', display: 'flex', gap: 14, alignItems: 'flex-start', minHeight: 96, marginTop: 12}}>
+        <div style={{width: 22, height: 22, borderRadius: '50%', flexShrink: 0, marginTop: 3, backgroundColor: todoistRed}}/>
+        <div style={{minWidth: 0}}>
+          <h2 className='taskTitle' style={{fontSize: 20, fontWeight: 700, lineHeight: 1.3}}
+            dangerouslySetInnerHTML={{__html: convertMarkdown(tasks[0].content)}}/>
+          <p className='secondary small' style={{marginTop: 4}}>{describeDue(tasks[0].due, settings.time_format)}</p>
+          {taskLabels(tasks[0])}
+        </div>
+      </div>
+      <div style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : '', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: 120,
+        margin: `8px ${-screenMargin}px ${-screenMargin}px`, padding: '8px 8px 16px', backgroundColor: 'var(--surface)', borderRadius: '24px 24px 0 0'}}>
+        {actionPanels}
+      </div>
+    </React.Fragment>
+  );
+
+  //Desktop: the current task & actions on the left, with the queue of tasks as cards flowing up on the right
+  const desktopPlanner = () => (
+    <div className='desktopPlanner'>
+      <div className='desktopMain'>
+        <div>
+          <h1 style={{fontSize: 44, fontWeight: 700, lineHeight: 1.15}}>
+            {greeting()}{userFirstName ? `, ${userFirstName}` : ''}<span style={{color: todoistRed}}>.</span>
+          </h1>
+          <p className='secondary' style={{fontSize: 24, fontWeight: 600, opacity: 0.6}}>Take a moment to plan your day</p>
+        </div>
+        <div style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : '', margin: 'auto 0', maxWidth: 640}}>
+          <p className='secondary small' style={{fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase'}}>Now planning · {tasksLeft}</p>
+          <h2 className='taskTitle' style={{fontSize: 36, fontWeight: 700, lineHeight: 1.2, marginTop: 8}}
+            dangerouslySetInnerHTML={{__html: convertMarkdown(tasks[0].content)}}/>
+          <p className='secondary' style={{marginTop: 8}}>{describeDue(tasks[0].due, settings.time_format)}</p>
+          {taskLabels(tasks[0])}
+        </div>
+        <div className='desktopActions' style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : ''}}>
+          {actionPanels}
+        </div>
+      </div>
+      <div className='desktopQueue'>
+        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12}}>
+          <p className='secondary small' style={{fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase'}}>Up next</p>
+          <div style={{marginRight: -10 /*Line the gear icon (not its round hit area) up with the cards' right edge*/}}>{settingsButton}</div>
+        </div>
+        <div id="taskContainer">
+          {tasks.map((t, i) =>
+            <div key={t.id} id={t.id} className={!visibleItemsDoneAnimating ? 'flowUpAnimation' : ''}
+              style={{animationDelay: `${Math.min(i, 10) * 80}ms`}} onAnimationEnd={animationEnd}>
+              <div className={`taskCard${visibleItemsDoneAnimating && t === tasks[0] ? ' current' : ''}`}>
+                <div className='taskTitle' style={{fontWeight: 600, lineHeight: 1.35}} dangerouslySetInnerHTML={{__html: convertMarkdown(t.content)}}/>
+                <p className='small' style={{marginTop: 4, fontWeight: 600, color: isOverdue(t.due) ? todoistRed : 'var(--primary)'}}>
+                  {describeDue(t.due, settings.time_format)}
+                </p>
+                {taskLabels(t)}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <React.Fragment>
       <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'end', height: '100%', overflow: 'hidden', padding: screenMargin, boxSizing: 'border-box'}}>
-        {!loading && !showSettings ?
-          <button type='button' className='iconButton' aria-label='Settings' onClick={openSettings} style={{position: 'absolute', top: screenMargin / 2, right: screenMargin / 2}}>
-            <i className='bi bi-gear'/>
-          </button>
+        {!loading && !showSettings && !showingDesktopPlanner ? //The desktop planner shows the gear in its "Up next" header instead
+          <div style={{position: 'absolute', top: screenMargin / 2, right: screenMargin / 2, zIndex: 1}}>{settingsButton}</div>
         : null}
         {loading ? <LoadingView/> :
           showSettings ? <SettingsView onCancel={settingsCancelable ? closeSettings : null}/> :
           noTasks ? <NoTasksView/> :
           tasks.length === 0 ? <FinalMessage/> :
-          <React.Fragment>
-            <div style={{marginBottom: 'auto', paddingTop: 48}}>
-              <h1 style={{fontSize: 34, fontWeight: 700, lineHeight: 1.15}}>
-                {greeting()}{userFirstName ? <React.Fragment><br/>{userFirstName},</React.Fragment> : ','}
-              </h1>
-              <p className='secondary' style={{marginTop: 12}}>
-                Take a moment to plan your day · {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'} left
-              </p>
-            </div>
-            {/*Negative right margin so the dots still slide in from the edge of the screen rather than from inside the screen margin*/}
-            <div id="taskContainer" style={{display: 'flex', flexDirection: 'row', alignItems: 'end', marginLeft: '50%', marginRight: -screenMargin, height: 40}}>
-              {tasks.map(t =>
-                <div key={t.id} id ={t.id} className={!visibleItemsDoneAnimating ? "slideInAnimation" : ""} onAnimationEnd={animationEnd}>
-                  <div className='todoistTaskItem' style={visibleItemsDoneAnimating && t === tasks[0] ? {marginBottom: 14, backgroundColor: todoistRed} : null}/>
-                </div>
-              )}
-            </div>
-            <div style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : '', display: 'flex', gap: 14, alignItems: 'flex-start', minHeight: 96, marginTop: 12}}>
-              <div style={{width: 22, height: 22, borderRadius: '50%', flexShrink: 0, marginTop: 3, backgroundColor: todoistRed}}/>
-              <div style={{minWidth: 0}}>
-                <h2 className='taskTitle' style={{fontSize: 20, fontWeight: 700, lineHeight: 1.3}}
-                  dangerouslySetInnerHTML={{__html: convertMarkdown(tasks[0].content)}}/>
-                <p className='secondary small' style={{marginTop: 4}}>{describeDue(tasks[0].due, settings.time_format)}</p>
-                <div style={{display: 'flex', flexWrap: 'wrap', columnGap: 12, marginTop: 4}}>
-                  {tasks[0].labels.map(l => <Label key={l} todoistLabels={todoistLabels} name={l}/>)}
-                </div>
-              </div>
-            </div>
-            <div style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : '', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: 120,
-              margin: `8px ${-screenMargin}px ${-screenMargin}px`, padding: '8px 8px 16px', backgroundColor: '#1e1e1e', borderRadius: '24px 24px 0 0'}}>
-              <div style={{display: actionPanelType === 'primary' ? 'flex' : 'none' /*Todo: need transition/animation for panel collapse*/, flexDirection: 'row', justifyContent: 'space-around'}}>
-                <ActionButton text='Today' color='success' icon='arrow-down'
-                  onClick={() => setActionPanelType('today')} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton text='Later' color='warning' icon='arrow-right'
-                  onClick={() => setActionPanelType('later')} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton text='Done' color='info' icon='check-lg'
-                  onClick={() => completeCurrentTask()} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton text='Delete' color='error' icon='x-lg'
-                  onClick={() => deleteCurrentTask()} enabled={!currentPrimaryItemAnimation}/>
-              </div>
-              <div style={{display: actionPanelType === 'today' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-around'}}>
-                <ActionButton small text='No time' color='success' icon='bell-slash'
-                  onClick={() => rescheduleCurrentTask(todayPlusDays(0), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton small text='Morning' innerText='10' color='success'
-                  onClick={() => rescheduleCurrentTask(todayWithHour(10), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton small text='Noon' innerText='12' color='success'
-                  onClick={() => rescheduleCurrentTask(todayWithHour(12), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton small text='Afternoon' innerText='15' color='success'
-                  onClick={() => rescheduleCurrentTask(todayWithHour(15), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton small text='Evening' innerText='19' color='success'
-                  onClick={() => rescheduleCurrentTask(todayWithHour(19), settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton small text='Other' color='success' icon='question-lg'
-                  onClick={() => rescheduleCurrentTask('other', settings.todayLabel)} enabled={!currentPrimaryItemAnimation}/>
-              </div>
-              <div style={{display: actionPanelType === 'later' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'space-around'}}>
-                <ActionButton text='Tomorrow' color='warning' icon='chevron-right'
-                  onClick={() => rescheduleCurrentTask(todayPlusDays(1), settings.tomorrowLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton text='In 2 days' color='warning' icon='chevron-double-right'
-                  onClick={() => rescheduleCurrentTask(todayPlusDays(2), settings.otherLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton text='Next week' color='warning' icon='chevron-bar-right'
-                  onClick={() => rescheduleCurrentTask(nextWeek(settings.next_week), settings.otherLabel)} enabled={!currentPrimaryItemAnimation}/>
-                <ActionButton text='Someday' color='warning' icon='question-lg'
-                  onClick={() => rescheduleCurrentTask('someday', settings.otherLabel)} enabled={!currentPrimaryItemAnimation}/>
-              </div>
-            </div>
-          </React.Fragment>
+          isDesktop ? desktopPlanner() : mobilePlanner()
         }
       </div>
       <PickerDialog open={pickerDialogOpen} type={pickerDialogType} onClose={() => setPickerDialogOpen(false)} resultHandler={pickerDialogResultHandler}/>
