@@ -57,6 +57,8 @@ function App() {
   const [userFirstName, setUserFirstName] = useState(null);
   const [noTasks, setNoTasks] = useState(false);
   const [tasks, setTasks] = useState([]);
+  const [activeTaskId, setActiveTaskId] = useState(null); //null means the first task (desktop lets the user pick a different one)
+  const currentTask = tasks.find(t => t.id === activeTaskId) ?? tasks[0];
   const [todoistLabels, setTodoistLabels] = useState([]);
 
   const [pickerDialogOpen, setPickerDialogOpen] = useState(false);
@@ -143,15 +145,33 @@ function App() {
       setCurrentPrimaryItemAnimation('slideInOthers');
     }
     else if (currentPrimaryItemAnimation === 'slideInOthers') {
-      setTasks(tasks.slice(1));
+      //Remove the handled task and go back to the top of the list (even if the user had picked a task further down)
+      setTasks(tasks.filter(t => t !== currentTask));
+      setActiveTaskId(null);
       setCurrentPrimaryItemAnimation(null);
     }
   }
 
-  const removeFirstUiItem = () => {
+  const removeCurrentUiItem = () => {
     setCurrentPrimaryItemAnimation('collapse'); //Todo: need different animations for different types of "remove item" (today/later/done/delete all need separate animations)
-    document.querySelectorAll("#taskContainer *")[0].firstChild.classList.add("collapse");
+    document.getElementById(currentTask.id).firstChild.classList.add("collapse");
   };
+
+  const selectTask = (task) => {
+    if (!visibleItemsDoneAnimating || currentPrimaryItemAnimation) {
+      return; //Don't switch while things are still moving
+    }
+
+    setActiveTaskId(task.id);
+    setActionPanelType('primary');
+  };
+
+  //Keep the active card in view on desktop (e.g. when the next task becomes active further down the list)
+  useEffect(() => {
+    if (isDesktop && currentTask && visibleItemsDoneAnimating) {
+      document.getElementById(currentTask.id)?.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+    }
+  }, [isDesktop, currentTask, visibleItemsDoneAnimating]);
 
   const openPickerDialog = (type, callback) => {
     setPickerDialogType(type);
@@ -165,7 +185,6 @@ function App() {
   };
 
   const rescheduleCurrentTask = (rescheduleTo, label) => {
-    var currentTask = tasks[0];
 
     if (rescheduleTo === 'other') {
       openPickerDialog('time', res => {
@@ -218,21 +237,19 @@ function App() {
 
       todoistUpdateTask(currentTask.id, payload).catch(reportUpdateError);
 
-      removeFirstUiItem();
+      removeCurrentUiItem();
       setActionPanelType('primary');
     }
   };
 
   const completeCurrentTask = () => {
-    var currentTask = tasks[0];
     todoistCompleteTask(currentTask.id).catch(reportUpdateError);
-    removeFirstUiItem();
+    removeCurrentUiItem();
   };
 
   const deleteCurrentTask = () => {
-    var currentTask = tasks[0];
     todoistCompleteTask(currentTask.id).catch(reportUpdateError);
-    removeFirstUiItem();
+    removeCurrentUiItem();
   };
 
   const actionsEnabled = !currentPrimaryItemAnimation;
@@ -307,7 +324,7 @@ function App() {
       <div id="taskContainer" style={{display: 'flex', flexDirection: 'row', alignItems: 'end', marginLeft: '50%', marginRight: -screenMargin, height: 40}}>
         {tasks.map(t =>
           <div key={t.id} id ={t.id} className={!visibleItemsDoneAnimating ? "slideInAnimation" : ""} onAnimationEnd={animationEnd}>
-            <div className='todoistTaskItem' style={visibleItemsDoneAnimating && t === tasks[0] ? {marginBottom: 14, backgroundColor: todoistRed} : null}/>
+            <div className='todoistTaskItem' style={visibleItemsDoneAnimating && t === currentTask ? {marginBottom: 14, backgroundColor: todoistRed} : null}/>
           </div>
         )}
       </div>
@@ -315,9 +332,9 @@ function App() {
         <div style={{width: 22, height: 22, borderRadius: '50%', flexShrink: 0, marginTop: 3, backgroundColor: todoistRed}}/>
         <div style={{minWidth: 0}}>
           <h2 className='taskTitle' style={{fontSize: 20, fontWeight: 700, lineHeight: 1.3}}
-            dangerouslySetInnerHTML={{__html: convertMarkdown(tasks[0].content)}}/>
-          <p className='secondary small' style={{marginTop: 4}}>{describeDue(tasks[0].due, settings.time_format)}</p>
-          {taskLabels(tasks[0])}
+            dangerouslySetInnerHTML={{__html: convertMarkdown(currentTask.content)}}/>
+          <p className='secondary small' style={{marginTop: 4}}>{describeDue(currentTask.due, settings.time_format)}</p>
+          {taskLabels(currentTask)}
         </div>
       </div>
       <div style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : '', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: 120,
@@ -340,9 +357,9 @@ function App() {
         <div style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : '', margin: 'auto 0', maxWidth: 640}}>
           <p className='secondary small' style={{fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase'}}>Now planning · {tasksLeft}</p>
           <h2 className='taskTitle' style={{fontSize: 36, fontWeight: 700, lineHeight: 1.2, marginTop: 8}}
-            dangerouslySetInnerHTML={{__html: convertMarkdown(tasks[0].content)}}/>
-          <p className='secondary' style={{marginTop: 8}}>{describeDue(tasks[0].due, settings.time_format)}</p>
-          {taskLabels(tasks[0])}
+            dangerouslySetInnerHTML={{__html: convertMarkdown(currentTask.content)}}/>
+          <p className='secondary' style={{marginTop: 8}}>{describeDue(currentTask.due, settings.time_format)}</p>
+          {taskLabels(currentTask)}
         </div>
         <div className='desktopActions' style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : ''}}>
           {actionPanels}
@@ -353,11 +370,14 @@ function App() {
           <p className='secondary small' style={{fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase'}}>Up next</p>
           <div style={{marginRight: -10 /*Line the gear icon (not its round hit area) up with the cards' right edge*/}}>{settingsButton}</div>
         </div>
-        <div id="taskContainer">
+        {/*Only scrollable once the cards have flowed in (so the flow-up animation doesn't flash a scrollbar)*/}
+        <div id="taskContainer" className='taskQueue' style={{overflowY: visibleItemsDoneAnimating ? 'auto' : 'hidden'}}>
           {tasks.map((t, i) =>
             <div key={t.id} id={t.id} className={!visibleItemsDoneAnimating ? 'flowUpAnimation' : ''}
               style={{animationDelay: `${Math.min(i, 10) * 80}ms`}} onAnimationEnd={animationEnd}>
-              <div className={`taskCard${visibleItemsDoneAnimating && t === tasks[0] ? ' current' : ''}`}>
+              <div className={`taskCard${visibleItemsDoneAnimating && t === currentTask ? ' current' : ''}`}
+                role='button' tabIndex={0} aria-pressed={t === currentTask} onClick={() => selectTask(t)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectTask(t); } }}>
                 <div className='taskTitle' style={{fontWeight: 600, lineHeight: 1.35}} dangerouslySetInnerHTML={{__html: convertMarkdown(t.content)}}/>
                 <p className='small' style={{marginTop: 4, fontWeight: 600, color: isOverdue(t.due) ? todoistRed : 'var(--primary)'}}>
                   {describeDue(t.due, settings.time_format)}

@@ -374,6 +374,17 @@ html, body, #root {
   border-left: 1px solid var(--border);
   background-color: #161616;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.taskQueue { /*The scrolling list of cards - stretched to the column's edges so the scrollbar sits at the edge*/
+  flex: 1;
+  min-height: 0;
+  margin: 0 -24px;
+  padding: 2px 24px 24px; /*2px keeps the current card's outline from being clipped at the top*/
+  scrollbar-width: thin;
+  scrollbar-color: #444 transparent;
 }
 
 .taskCard {
@@ -382,7 +393,17 @@ html, body, #root {
   border: 1px solid var(--border);
   border-radius: 14px;
   background-color: var(--surface);
+  cursor: pointer;
   transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.taskCard:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.taskCard:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .taskCard.current {
