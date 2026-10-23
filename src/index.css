@@ -1,10 +1,54 @@
+:root {
+  color-scheme: dark; /*Todo: this should be a setting*/
+
+  --bg: #121212;
+  --surface: #1e1e1e;
+  --surface-raised: #2a2a2a;
+  --text: #fff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --border: rgba(255, 255, 255, 0.12);
+  --field-border: rgba(255, 255, 255, 0.23);
+
+  --primary: #90caf9;
+  --success: #66bb6a;
+  --warning: #ffa726;
+  --info: #29b6f6;
+  --error: #f44336;
+  --todoist-red: #e44332;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, p {
+  margin: 0;
+}
+
+button, input {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--primary);
+}
+
+.secondary {
+  color: var(--text-secondary);
+}
+
+.small {
+  font-size: 14px;
+  line-height: 1.43;
 }
 
 code {

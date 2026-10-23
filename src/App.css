@@ -1,7 +1,3 @@
-:root{
-  color-scheme: dark; /*Todo: this should be a setting*/
-}
-
 html, body, #root {
   height: 100%;
   margin: 0;
@@ -69,4 +65,277 @@ html, body, #root {
   width: 18px;
   margin: 5px;
   transition: margin-bottom 0.3s, background-color 0.3s;
+}
+
+/* ---------- Buttons ---------- */
+
+.iconButton { /*Borderless round button for small icons (settings gear, close, show password)*/
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.iconButton:active {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.roundButton { /*Tinted circle used by ActionButton - set --accent to the button's color*/
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 14%, transparent);
+  cursor: pointer;
+  transition: transform 0.1s, background-color 0.1s;
+}
+
+.roundButton:active {
+  transform: scale(0.92);
+  background-color: color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
+.roundButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+  transform: none;
+}
+
+.caption {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.primaryButton {
+  padding: 8px 22px;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--primary);
+  color: rgba(0, 0, 0, 0.87);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 26px;
+  letter-spacing: 0.46px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: filter 0.1s;
+}
+
+.primaryButton:active {
+  filter: brightness(0.9);
+}
+
+.primaryButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+  filter: none;
+}
+
+.textButton {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--primary);
+  font-size: 15px;
+  font-weight: 500;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.textButton:active {
+  background-color: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+/* ---------- Settings ---------- */
+
+.settingsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.settingsSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.75;
+}
+
+.textField { /*Outlined text field with its label sitting on the border*/
+  position: relative;
+}
+
+.textFieldBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 8px 0 14px;
+  border: 1px solid var(--field-border);
+  border-radius: 4px;
+}
+
+.textFieldBox:focus-within {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.textFieldBox input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+.textFieldBox input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.textFieldLabel {
+  position: absolute;
+  top: -9px;
+  left: 10px;
+  padding: 0 4px;
+  background-color: var(--bg); /*Cuts out the border behind the label*/
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.textField:focus-within .textFieldLabel {
+  color: var(--primary);
+}
+
+.textFieldHelper {
+  margin: 3px 14px 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.66;
+}
+
+.textField.error .textFieldBox {
+  border-color: var(--error);
+  box-shadow: none;
+}
+
+.textField.error .textFieldLabel, .textField.error .textFieldHelper {
+  color: var(--error);
+}
+
+/* ---------- Loading ---------- */
+
+.spinner {
+  width: 160px;
+  height: 160px;
+  border: 14px solid transparent;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  box-sizing: border-box;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Picker sheet ---------- */
+
+.sheet { /*A <dialog> shown as a sheet that slides up from the bottom of the screen*/
+  width: 100%;
+  max-width: 100%;
+  margin: auto 0 0;
+  padding: 0; /*Padding goes on the content so taps on the dialog element itself are always backdrop taps*/
+  border: none;
+  border-radius: 24px 24px 0 0;
+  box-sizing: border-box;
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+.sheet[open] {
+  animation: sheetUp 0.25s ease-out;
+}
+
+.sheet::backdrop {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+@keyframes sheetUp {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+.sheetHandle {
+  width: 36px;
+  height: 4px;
+  margin: 0 auto;
+  border-radius: 2px;
+  background-color: var(--field-border);
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chip {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.chip.selected {
+  border-color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.pickerInput { /*Big native date/time input - tapping it opens the phone's own picker*/
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  min-width: 0;
+  box-sizing: border-box;
+  background-color: var(--surface-raised);
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.pickerInput:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
 }

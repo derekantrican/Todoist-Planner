@@ -1,11 +1,5 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import {
-  IconButton,
-  Typography,
-  ThemeProvider,
-  createTheme,
-} from '@mui/material';
 import './App.css';
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { todoistCompleteTask, todoistGetLabels, todoistGetTasks, todoistUpdateSettingsFromTodoist, todoistUpdateTask } from './helpers/todoistApi';
@@ -19,15 +13,9 @@ import { ActionButton } from './views/actionButton';
 import { NoTasksView } from './views/noTasks';
 
 const screenMargin = 16;
-const todoistRed = '#e44332';
+const todoistRed = 'var(--todoist-red)';
 
 const isSettingsPath = () => /\/settings\/?$/.test(window.location.pathname);
-
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-  },
-});
 
 const Label = (props) => {
   //Shared labels aren't returned by /labels (only personal ones are) so they won't have color data - show them with the default color
@@ -36,7 +24,7 @@ const Label = (props) => {
   return (
     <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 4}}>
       <i style={{fontSize: 12, color: todoistColor(matchingLabelData?.color)}} className='bi bi-tag-fill'/>
-      <Typography variant='body2' color='text.secondary'>{props.name}</Typography>
+      <span className='secondary small'>{props.name}</span>
     </div>
   );
 }
@@ -229,12 +217,12 @@ function App() {
   };
 
   return (
-    <ThemeProvider theme={darkTheme}>
+    <React.Fragment>
       <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'end', height: '100%', overflow: 'hidden', padding: screenMargin, boxSizing: 'border-box'}}>
         {!loading && !showSettings ?
-          <IconButton aria-label='Settings' onClick={openSettings} sx={{position: 'absolute', top: screenMargin / 2, right: screenMargin / 2, color: 'text.secondary'}}>
-            <i style={{fontSize: 20}} className='bi bi-gear'/>
-          </IconButton>
+          <button type='button' className='iconButton' aria-label='Settings' onClick={openSettings} style={{position: 'absolute', top: screenMargin / 2, right: screenMargin / 2}}>
+            <i className='bi bi-gear'/>
+          </button>
         : null}
         {loading ? <LoadingView/> :
           showSettings ? <SettingsView onCancel={settingsCancelable ? closeSettings : null}/> :
@@ -242,12 +230,12 @@ function App() {
           tasks.length === 0 ? <FinalMessage/> :
           <React.Fragment>
             <div style={{marginBottom: 'auto', paddingTop: 48}}>
-              <Typography variant='h4' sx={{fontWeight: 700, lineHeight: 1.15}}>
+              <h1 style={{fontSize: 34, fontWeight: 700, lineHeight: 1.15}}>
                 {greeting()}{userFirstName ? <React.Fragment><br/>{userFirstName},</React.Fragment> : ','}
-              </Typography>
-              <Typography color='text.secondary' sx={{marginTop: 1.5}}>
+              </h1>
+              <p className='secondary' style={{marginTop: 12}}>
                 Take a moment to plan your day · {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'} left
-              </Typography>
+              </p>
             </div>
             {/*Negative right margin so the dots still slide in from the edge of the screen rather than from inside the screen margin*/}
             <div id="taskContainer" style={{display: 'flex', flexDirection: 'row', alignItems: 'end', marginLeft: '50%', marginRight: -screenMargin, height: 40}}>
@@ -260,9 +248,9 @@ function App() {
             <div style={{visibility: !visibleItemsDoneAnimating ? 'hidden' : '', display: 'flex', gap: 14, alignItems: 'flex-start', minHeight: 96, marginTop: 12}}>
               <div style={{width: 22, height: 22, borderRadius: '50%', flexShrink: 0, marginTop: 3, backgroundColor: todoistRed}}/>
               <div style={{minWidth: 0}}>
-                <Typography variant='h6' className='taskTitle' sx={{fontWeight: 700, lineHeight: 1.3}}
+                <h2 className='taskTitle' style={{fontSize: 20, fontWeight: 700, lineHeight: 1.3}}
                   dangerouslySetInnerHTML={{__html: convertMarkdown(tasks[0].content)}}/>
-                <Typography variant='body2' color='text.secondary' sx={{marginTop: 0.5}}>{describeDue(tasks[0].due, settings.time_format)}</Typography>
+                <p className='secondary small' style={{marginTop: 4}}>{describeDue(tasks[0].due, settings.time_format)}</p>
                 <div style={{display: 'flex', flexWrap: 'wrap', columnGap: 12, marginTop: 4}}>
                   {tasks[0].labels.map(l => <Label key={l} todoistLabels={todoistLabels} name={l}/>)}
                 </div>
@@ -309,7 +297,7 @@ function App() {
         }
       </div>
       <PickerDialog open={pickerDialogOpen} type={pickerDialogType} onClose={() => setPickerDialogOpen(false)} resultHandler={pickerDialogResultHandler}/>
-    </ThemeProvider>
+    </React.Fragment>
   );
 }
 

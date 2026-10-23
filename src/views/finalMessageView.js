@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { Typography } from "@mui/material";
 import { randomInt } from "../helpers/utils";
 
 export function FinalMessage() {
@@ -23,9 +22,9 @@ export function FinalMessage() {
   return (
     <div ref={ref} id="final-message" style={{ marginTop: 'auto', marginBottom: 'auto' }}>
       {chosenMessage.map((line, index) => (
-        <Typography key={index} style={{ visibility: 'hidden' }} variant="h3" sx={{ color: 'deepskyblue' }}>
+        <h3 key={index} style={{ visibility: 'hidden', color: 'deepskyblue', fontSize: 48, fontWeight: 400, lineHeight: 1.167 }}>
           {line}
-        </Typography>
+        </h3>
       ))}
     </div>
   );
