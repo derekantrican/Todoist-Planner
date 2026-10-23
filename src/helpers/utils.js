@@ -32,6 +32,12 @@ Date.prototype.yyyyMMdd = function () {
   return `${this.getFullYear()}-${month}-${date}`;
 }
 
+//Local date & time without a timezone (a "floating" datetime in Todoist)
+export function toFloatingDateTime(date) {
+  var pad = n => n.toString().padStart(2, '0');
+  return `${date.yyyyMMdd()}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
 export function convertMarkdown(text) {
   if (text) {
     return new Showdown.Converter().makeHtml(text);

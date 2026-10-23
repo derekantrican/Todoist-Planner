@@ -8,7 +8,7 @@ import {
 import './App.css';
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { todoistCompleteTask, todoistGetLabels, todoistGetTasks, todoistUpdateSettingsFromTodoist, todoistUpdateTask } from './helpers/todoistApi';
-import { convertMarkdown, nextWeek, todayPlusDays, todayWithHour } from './helpers/utils';
+import { convertMarkdown, nextWeek, toFloatingDateTime, todayPlusDays, todayWithHour } from './helpers/utils';
 import { readSettings, settings } from './helpers/settings';
 import { SettingsView } from './views/settingsView';
 import { FinalMessage } from './views/finalMessageView';
@@ -24,14 +24,12 @@ const darkTheme = createTheme({
 });
 
 const Label = (props) => {
+  //Shared labels aren't returned by /labels (only personal ones are) so they won't have color data - show them with the default color
   var matchingLabelData = props.todoistLabels.find(label => label.name === props.name);
-  if (!matchingLabelData) {
-    return null;
-  }
 
   return (
     <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
-      <i style={{margin: 5, color: matchingLabelData.color}} className='bi bi-tag-fill'/>
+      <i style={{margin: 5, color: matchingLabelData?.color}} className='bi bi-tag-fill'/>
       <Typography>{props.name}</Typography>
     </div>
   );
@@ -54,7 +52,7 @@ function App() {
 
   useEffect(() => {
     async function populateTodoistItems() {
-      const data = (await todoistGetTasks()).results;
+      const data = await todoistGetTasks();
 
       //Replace markdown links like '[some link](www.google.com)' to 'some link' for easier reading
       //(I could also let these go through showdown.js and be rendered, but I don't know if I want to
@@ -71,7 +69,7 @@ function App() {
     };
 
     async function populateTodoistLabels() {
-      const data = (await todoistGetLabels()).results;
+      const data = await todoistGetLabels();
       setTodoistLabels(data);
     }
 
@@ -132,6 +130,11 @@ function App() {
     setPickerDialogOpen(true);
   };
 
+  const reportUpdateError = (e) => {
+    console.log(e);
+    alert('Problem updating a task in todoist - the change may not have been saved');
+  };
+
   const rescheduleCurrentTask = (rescheduleTo, label) => {
     var currentTask = tasks[0];
 
@@ -148,26 +151,34 @@ function App() {
     else {
       var payload = {due:{}};
 
-      if (currentTask.due.is_recurring) { //Preserve the existing due string
+      if (currentTask.due?.is_recurring) { //Preserve the existing recurrence (re-sending just the due string would advance overdue tasks an extra day)
         payload.due.string = currentTask.due.string;
+        payload.due.is_recurring = true;
       }
-      
-      if (rescheduleTo instanceof Date) {
-        if (rescheduleTo.getHours() === 0) {
-          //If rescheduleTo does not have a time component & currentTask.due.datetime does, then use the time from the latter in rescheduleTo
-          var taskDueDateTime = new Date(currentTask.due.datetime);
-          if (currentTask.due.datetime && taskDueDateTime.getHours() !== 0) {
-            rescheduleTo = new Date(rescheduleTo.getFullYear(), rescheduleTo.getMonth(), rescheduleTo.getDate(),
-                                    taskDueDateTime.getHours(), taskDueDateTime.getMinutes());
 
-            payload.due.date = rescheduleTo.toISOString();
-          }
-          else {
-            payload.due.date = rescheduleTo.yyyyMMdd();
-          }
+      //In API v1 any time is part of due.date: "2026-10-22" (all day), "2026-10-22T13:00:00" (floating) or "2026-10-22T13:00:00Z" (fixed timezone, in UTC)
+      var currentDueDate = currentTask.due?.date;
+      var currentHasTime = currentDueDate?.includes('T') ?? false;
+      var currentIsFloating = currentHasTime && !currentDueDate.endsWith('Z');
+
+      if (rescheduleTo instanceof Date) {
+        var rescheduleHasTime = rescheduleTo.getHours() !== 0;
+        if (!rescheduleHasTime && currentHasTime) {
+          //If rescheduleTo does not have a time component & the current due date does, then use the time from the latter in rescheduleTo
+          var taskDueDateTime = new Date(currentDueDate); //Floating times are parsed as local, 'Z' times are converted to local
+          rescheduleTo = new Date(rescheduleTo.getFullYear(), rescheduleTo.getMonth(), rescheduleTo.getDate(),
+                                  taskDueDateTime.getHours(), taskDueDateTime.getMinutes());
+          rescheduleHasTime = true;
+        }
+
+        if (!rescheduleHasTime) {
+          payload.due.date = rescheduleTo.yyyyMMdd();
+        }
+        else if (currentIsFloating) {
+          payload.due.date = toFloatingDateTime(rescheduleTo); //Keep floating times floating (local time, no 'Z')
         }
         else {
-          payload.due.date = rescheduleTo.toISOString();
+          payload.due.date = rescheduleTo.toISOString(); //Send fixed times as UTC with 'Z' (a time without 'Z' is not interpreted as local)
         }
       }
 
@@ -176,7 +187,7 @@ function App() {
         payload.labels = [...new Set((currentTask.labels ?? []).concat([label]))];
       }
 
-      todoistUpdateTask(currentTask.id, payload);
+      todoistUpdateTask(currentTask.id, payload).catch(reportUpdateError);
 
       removeFirstUiItem();
       setActionPanelType('primary');
@@ -185,13 +196,13 @@ function App() {
 
   const completeCurrentTask = () => {
     var currentTask = tasks[0];
-    todoistCompleteTask(currentTask.id);
+    todoistCompleteTask(currentTask.id).catch(reportUpdateError);
     removeFirstUiItem();
   };
 
   const deleteCurrentTask = () => {
     var currentTask = tasks[0];
-    todoistCompleteTask(currentTask.id);
+    todoistCompleteTask(currentTask.id).catch(reportUpdateError);
     removeFirstUiItem();
   };
 
